@@ -1,0 +1,12 @@
+{
+  "name": "LangFluency",
+  "manifest_version": 3,
+  "version": "1.0.0",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [],
+  "permissions": [],
+  "host_permissions": [],
+  "web_accessible_resources": []
+}
