@@ -2,7 +2,7 @@ import { LANGUAGES, PLATFORM, Subtitle } from '../types'
 import { PlatformInterface } from './platform.interface'
 import parseTranscript from '../parsers/parser-xml'
 
-export class YoutubeSubtitle implements PlatformInterface {
+export class YoutubePlatform implements PlatformInterface {
   name = PLATFORM.YOUTUBE
 
   private async fetchCaptionTracks(): Promise<CaptionTrack[]> {
