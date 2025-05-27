@@ -4,8 +4,6 @@ export type Subtitle = {
   text: string
 }
 
-export const enum LANGUAGES {
-  EN = "en",
-  PTBR = "pt-BR"
+export type LANGUAGES = {
+  [key: string]: string
 }
-

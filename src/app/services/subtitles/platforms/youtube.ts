@@ -1,10 +1,15 @@
-import { LANGUAGES, Subtitle } from '@/app/services/subtitles/types'
+import { Subtitle } from '@/app/services/subtitles/types'
+import { GLOBAL_LANGUAGES } from '@/app/assets/constants'
+import { LANGUAGES } from '@/app/services/subtitles/types'
 import { PLATFORM } from '@/app/services/types'
 import parseTranscript from '@/app/services/subtitles/parsers/parser-xml'
 import { SubtitlePlatformInterface } from '@/app/services/subtitles/platforms/subtitle-platform.interface'
 
 export class YoutubeSubtitlePlatform implements SubtitlePlatformInterface {
   name = PLATFORM.YOUTUBE
+  languageCode: LANGUAGES = {
+    [GLOBAL_LANGUAGES.EN]: 'en',
+  }
 
   private async fetchCaptionTracks(): Promise<CaptionTrack[]> {
     const youtubeResponse = (await fetch(window.location.href)).text()
@@ -21,13 +26,14 @@ export class YoutubeSubtitlePlatform implements SubtitlePlatformInterface {
 
   private getBestCaption(
     captions: CaptionTrack[],
-    lang: LANGUAGES
+    lang: GLOBAL_LANGUAGES
   ): CaptionTrack {
+    const languageCode = this.languageCode[lang]
     const filteredCaptions = captions.filter(
-      (caption) => caption.languageCode == lang
+      (caption) => caption.languageCode == languageCode
     )
     const bestCaption = filteredCaptions.find(
-      (caption) => caption.vssId == `.${lang}` || caption.vssId == `a.${lang}`
+      (caption) => caption.vssId == `.${languageCode}` || caption.vssId == `a.${languageCode}`
     ) as CaptionTrack
 
     return bestCaption
@@ -38,7 +44,7 @@ export class YoutubeSubtitlePlatform implements SubtitlePlatformInterface {
     return parseTranscript(await response.text())
   }
 
-  async fetchSubtitles(lang: LANGUAGES): Promise<Subtitle[]> {
+  async fetchSubtitles(lang: GLOBAL_LANGUAGES): Promise<Subtitle[]> {
     const captions = await this.fetchCaptionTracks()
 
     if (captions.length == 0) {

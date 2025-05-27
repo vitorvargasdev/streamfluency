@@ -1,7 +1,8 @@
 import { SubtitlePlatformInterface } from '@/app/services/subtitles/platforms/subtitle-platform.interface'
 import { YoutubeSubtitlePlatform } from '@/app/services/subtitles/platforms/youtube'
 import { SubtitleInterface } from '@/app/services/subtitles/subtitle.interface'
-import { LANGUAGES, Subtitle } from './types'
+import { Subtitle } from './types'
+import { GLOBAL_LANGUAGES } from '@/app/assets/constants'
 import { PLATFORM } from '@/app/services/types'
 
 const platforms = {
@@ -15,7 +16,7 @@ export class SubtitleService implements SubtitleInterface {
     this.platform = new platforms[platform]()
   }
 
-  async fetchSubtitles(lang: LANGUAGES): Promise<Subtitle[]> {
+  async fetchSubtitles(lang: GLOBAL_LANGUAGES): Promise<Subtitle[]> {
     return this.platform.fetchSubtitles(lang)
   }
 
