@@ -9,13 +9,17 @@ const platforms = {
 }
 
 export class SubtitleService implements SubtitleInterface {
-  platform: SubtitlePlatformInterface 
+  platform: SubtitlePlatformInterface
 
   constructor(platform: PLATFORM) {
-    this.platform = new platforms[platform]
+    this.platform = new platforms[platform]()
   }
 
   async fetchSubtitles(lang: LANGUAGES): Promise<Subtitle[]> {
     return this.platform.fetchSubtitles(lang)
+  }
+
+  getCurrentSubtitle(subtitles: Subtitle[], currentTime: number): string {
+    return this.platform.getCurrentSubtitle(subtitles, currentTime)
   }
 }
