@@ -5,4 +5,5 @@ export interface SubtitleInterface {
   platform: SubtitlePlatformInterface
 
   fetchSubtitles(lang: LANGUAGES): Promise<Subtitle[]>
+  getCurrentSubtitle(subtitles: Subtitle[], currentTime: number): string
 }

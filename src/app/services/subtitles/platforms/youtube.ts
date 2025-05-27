@@ -50,6 +50,14 @@ export class YoutubeSubtitlePlatform implements SubtitlePlatformInterface {
 
     return await this.retrieveSubtitle(bestCaption)
   }
+
+  getCurrentSubtitle(subtitles: Subtitle[], currentTime: number): string {
+    const activeSubtitles = subtitles
+      .filter((sub) => currentTime >= sub.begin && currentTime <= sub.end)
+      .map((sub) => sub.text)
+
+    return activeSubtitles.at(-1) ?? ''
+  }
 }
 
 type YoutubeContent = {
