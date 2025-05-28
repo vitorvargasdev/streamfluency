@@ -7,6 +7,11 @@ const injectApp = () => {
   const head = document.querySelector('head') as HTMLElement
   const player = document.querySelector('#movie_player') as HTMLElement
   inject(head, player)
+  removeYoutubeCaptions()
+}
+
+const removeYoutubeCaptions = () => {
+  document.querySelector('.ytp-caption-window-container')?.remove()
 }
 
 const miniPlayerMutationHandler = () => {
@@ -29,7 +34,7 @@ const videoMutationHandler = () => {
 const observeYoutubePlayerPosition = () => {
   miniPlayerObserver = new MutationObserver(miniPlayerMutationHandler)
   const miniPlayer = document.querySelector('ytd-miniplayer') as HTMLElement
-  
+
   if (!miniPlayer) {
     console.error('Mini player not found')
     return
