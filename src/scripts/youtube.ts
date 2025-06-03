@@ -7,11 +7,19 @@ const injectApp = () => {
   const head = document.querySelector('head') as HTMLElement
   const player = document.querySelector('#movie_player') as HTMLElement
   inject(head, player)
-  removeYoutubeCaptions()
+  setYoutubeCaptionsVisibility('none')
 }
 
-const removeYoutubeCaptions = () => {
-  document.querySelector('.ytp-caption-window-container')?.remove()
+const removeApp = () => {
+  remove()
+  setYoutubeCaptionsVisibility('block')
+}
+
+const setYoutubeCaptionsVisibility = (display: 'block' | 'none') => {
+  const captions = document.querySelector(
+    '.ytp-caption-window-container'
+  ) as HTMLElement
+  captions.style.display = display
 }
 
 const miniPlayerMutationHandler = () => {
@@ -19,7 +27,7 @@ const miniPlayerMutationHandler = () => {
   const isWatchingOnPage = miniPlayer.hasAttribute('is-watch-page')
 
   if (!isWatchingOnPage) {
-    remove()
+    removeApp()
     return
   }
 
@@ -27,7 +35,7 @@ const miniPlayerMutationHandler = () => {
 }
 
 const videoMutationHandler = () => {
-  remove()
+  removeApp()
   injectApp()
 }
 
