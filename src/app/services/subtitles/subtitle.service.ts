@@ -3,7 +3,7 @@ import { YoutubeSubtitlePlatform } from '@/app/services/subtitles/platforms/yout
 import { SubtitleInterface } from '@/app/services/subtitles/subtitle.interface'
 import { Subtitle } from './types'
 import { GLOBAL_LANGUAGES } from '@/app/assets/constants'
-import { PLATFORM } from '@/app/services/types'
+import { PLATFORM } from '@/app/assets/constants'
 
 const platforms = {
   [PLATFORM.YOUTUBE]: YoutubeSubtitlePlatform,

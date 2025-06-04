@@ -1,4 +1,4 @@
-import { PLATFORM } from '@/app/services/types'
+import { PLATFORM } from '@/app/assets/constants'
 import { LANGUAGES, Subtitle } from '@/app/services/subtitles/types'
 import { GLOBAL_LANGUAGES } from '@/app/assets/constants'
 

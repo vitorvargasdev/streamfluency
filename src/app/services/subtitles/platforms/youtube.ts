@@ -1,7 +1,7 @@
 import { Subtitle } from '@/app/services/subtitles/types'
 import { GLOBAL_LANGUAGES } from '@/app/assets/constants'
 import { LANGUAGES } from '@/app/services/subtitles/types'
-import { PLATFORM } from '@/app/services/types'
+import { PLATFORM } from '@/app/assets/constants'
 import parseTranscript from '@/app/services/subtitles/parsers/parser-xml'
 import { SubtitlePlatformInterface } from '@/app/services/subtitles/platforms/subtitle-platform.interface'
 

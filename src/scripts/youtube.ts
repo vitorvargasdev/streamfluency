@@ -1,4 +1,4 @@
-import { inject, remove } from './injection'
+import { inject, remove, PLATFORMS } from './injection'
 
 let miniPlayerObserver: MutationObserver | null = null
 let videoObserver: MutationObserver | null = null
@@ -6,7 +6,7 @@ let videoObserver: MutationObserver | null = null
 const injectApp = () => {
   const head = document.querySelector('head') as HTMLElement
   const player = document.querySelector('#movie_player') as HTMLElement
-  inject(head, player)
+  inject(PLATFORMS.YOUTUBE, head, player)
   setYoutubeCaptionsVisibility('none')
 }
 
