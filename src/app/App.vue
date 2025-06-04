@@ -1,26 +1,10 @@
 <script setup lang="ts">
-import SubtitleDisplay from '@/app/components/subtitleDisplay/SubtitleDisplay.vue'
-import LeftToolbar from '@/app/components/leftToolbar/LeftToolbar.vue'
-import RightToolbar from '@/app/components/rightToolbar/RightToolbar.vue'
+import AppPanel from './components/appPanel/AppPanel.vue';
 </script>
 
 <template>
   <div class="app">
-    <div class="panel">
-      <!-- <div> -->
-      <!--   <NextSubtitleButton /> -->
-      <!--   <ReplaySubtitleButton /> -->
-      <!--   <PreviousSubtitleButton /> -->
-      <!--  </div> -->
-
-      <LeftToolbar />
-      <SubtitleDisplay />
-      <RightToolbar />
-
-      <!-- <div> -->
-      <!--   <ConfigurationButton /> -->
-      <!-- </div> -->
-    </div>
+    <AppPanel />
   </div>
 </template>
 
@@ -37,16 +21,5 @@ import RightToolbar from '@/app/components/rightToolbar/RightToolbar.vue'
   z-index: 10;
   pointer-events: none;
 }
-
-.panel {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  position: absolute;
-  bottom: 35vh;
-  pointer-events: all;
-  font-size: 24px;
-}
 </style>
+
