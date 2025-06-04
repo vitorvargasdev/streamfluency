@@ -1,29 +1,52 @@
 <script setup lang="ts">
-import { PlayerService } from '@/app/services/player/player.service';
-import { SubtitleService } from '@/app/services/subtitles/subtitle.service';
-import { PLATFORM } from '@/app/services/types';
-import { GLOBAL_LANGUAGES } from '@/app/assets/constants';
-import { onMounted, ref } from 'vue'
-
-const currentSubtitle = ref('')
-
-onMounted(async () => {
-  const playerService = new PlayerService(PLATFORM.YOUTUBE)
-  const subtitleService = new SubtitleService(PLATFORM.YOUTUBE)
-  const subtitles = await subtitleService.fetchSubtitles(GLOBAL_LANGUAGES.EN)
-
-  setInterval(() => {
-    const currentTime = playerService.currentTime()
-    currentSubtitle.value = subtitleService.getCurrentSubtitle(
-      subtitles,
-      currentTime
-    )
-  }, 100)
-})
+import SubtitleDisplay from '@/app/components/subtitleDisplay/SubtitleDisplay.vue'
+import LeftToolbar from '@/app/components/leftToolbar/LeftToolbar.vue'
+import RightToolbar from '@/app/components/rightToolbar/RightToolbar.vue'
 </script>
 
 <template>
-  <div style="font-size: 30px; background-color: red; text-align: center">
-    {{ currentSubtitle }}
+  <div class="app">
+    <div class="panel">
+      <!-- <div> -->
+      <!--   <NextSubtitleButton /> -->
+      <!--   <ReplaySubtitleButton /> -->
+      <!--   <PreviousSubtitleButton /> -->
+      <!--  </div> -->
+
+      <LeftToolbar />
+      <SubtitleDisplay />
+      <RightToolbar />
+
+      <!-- <div> -->
+      <!--   <ConfigurationButton /> -->
+      <!-- </div> -->
+    </div>
   </div>
 </template>
+
+<style lang="scss" scoped>
+.app {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100vh;
+  background: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.panel {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  position: absolute;
+  bottom: 35vh;
+  pointer-events: all;
+  font-size: 24px;
+}
+</style>
