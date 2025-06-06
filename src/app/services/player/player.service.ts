@@ -1,6 +1,6 @@
 import { PlayerInterface } from '@/app/services/player/player.interface'
 import { YoutubePlayerPlatform } from '@/app/services/player/platforms/youtube'
-import { PLATFORM } from '@/app/services/types'
+import { PLATFORM } from '@/app/assets/constants'
 import { PlayerPlatformInterface } from './platforms/player-platform.interface'
 
 const platforms = {

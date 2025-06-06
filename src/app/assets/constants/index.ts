@@ -5,3 +5,7 @@ export const enum GLOBAL_LANGUAGES {
   JA = 'japanese',
 }
 
+export const enum PLATFORM {
+  YOUTUBE = 'youtube',
+}
+

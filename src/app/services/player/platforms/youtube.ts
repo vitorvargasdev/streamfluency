@@ -1,5 +1,5 @@
 import { PlayerPlatformInterface } from '@/app/services/player/platforms/player-platform.interface'
-import { PLATFORM } from '@/app/services/types'
+import { PLATFORM } from '@/app/assets/constants'
 
 export class YoutubePlayerPlatform implements PlayerPlatformInterface {
   name = PLATFORM.YOUTUBE
