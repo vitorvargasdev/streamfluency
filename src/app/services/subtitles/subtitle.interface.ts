@@ -1,5 +1,5 @@
 import { SubtitlePlatformInterface } from './platforms/subtitle-platform.interface'
-import { Subtitle } from './types'
+import { Subtitle } from '@/app/services/subtitles/types'
 import { GLOBAL_LANGUAGES } from '@/app/assets/constants'
 
 export interface SubtitleInterface {
