@@ -17,7 +17,7 @@ export class SubtitleService implements SubtitleInterface {
   }
 
   async fetchSubtitles(lang: GLOBAL_LANGUAGES): Promise<Subtitle[]> {
-    return this.platform.fetchSubtitles(lang)
+    return await this.platform.fetchSubtitles(lang)
   }
 
   getCurrentSubtitle(subtitles: Subtitle[], currentTime: number): string {

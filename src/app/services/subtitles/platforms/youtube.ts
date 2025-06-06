@@ -1,60 +1,118 @@
 import { Subtitle } from '@/app/services/subtitles/types'
 import { GLOBAL_LANGUAGES } from '@/app/assets/constants'
 import { LANGUAGES } from '@/app/services/subtitles/types'
-import { PLATFORM } from '@/app/services/types'
-import parseTranscript from '@/app/services/subtitles/parsers/parser-xml'
+import { PLATFORM } from '@/app/assets/constants'
 import { SubtitlePlatformInterface } from '@/app/services/subtitles/platforms/subtitle-platform.interface'
+import parse, {
+  YoutubeSubtitle,
+} from '@/app/services/subtitles/parsers/youtube-parser'
 
 export class YoutubeSubtitlePlatform implements SubtitlePlatformInterface {
   name = PLATFORM.YOUTUBE
   languageCode: LANGUAGES = {
     [GLOBAL_LANGUAGES.EN]: 'en',
+    [GLOBAL_LANGUAGES.PTBR]: 'pt-BR',
+    [GLOBAL_LANGUAGES.JA]: 'ja',
+  }
+  private captionUrl: string = ''
+
+  private getYoutubePlayer(): YoutubePlayer {
+    return document.querySelector('#movie_player') as YoutubePlayer
+  }
+
+  private async toggleSubtitlesOn(): Promise<void> {
+    const player = this.getYoutubePlayer()
+
+    if (player.isSubtitlesOn()) {
+      player.toggleSubtitles()
+    }
+
+    player.toggleSubtitlesOn()
   }
 
   private async fetchCaptionTracks(): Promise<CaptionTrack[]> {
-    const youtubeResponse = (await fetch(window.location.href)).text()
-    const youtubeContent = JSON.parse(
-      (await youtubeResponse)
-        .split('ytInitialPlayerResponse = ')[1]
-        .split(';var')[0]
-    ) as YoutubeContent
-    const captionTracks =
-      youtubeContent.captions.playerCaptionsTracklistRenderer.captionTracks
+    const player = this.getYoutubePlayer()
+    const captions = player.getAudioTrack()
 
-    return captionTracks
+    if (!captions) {
+      throw new Error('No captions found')
+    }
+
+    return captions.captionTracks.map((track) => ({
+      languageCode: track.languageCode,
+      vssId: track.vssId,
+    }))
   }
 
-  private getBestCaption(
-    captions: CaptionTrack[],
-    lang: GLOBAL_LANGUAGES
-  ): CaptionTrack {
-    const languageCode = this.languageCode[lang]
-    const filteredCaptions = captions.filter(
-      (caption) => caption.languageCode == languageCode
-    )
-    const bestCaption = filteredCaptions.find(
-      (caption) => caption.vssId == `.${languageCode}` || caption.vssId == `a.${languageCode}`
-    ) as CaptionTrack
+  private async getSubtitleUrl(): Promise<string> {
+    const originalXHR = XMLHttpRequest.prototype.open
 
-    return bestCaption
+    return new Promise((resolve, reject) => {
+      let attempts = 0
+
+      XMLHttpRequest.prototype.open = function (
+        method: string,
+        url: string | URL,
+        async?: boolean,
+        username?: string | null,
+        password?: string | null
+      ) {
+        const urlString = url.toString()
+        if (urlString.includes('timedtext')) {
+          XMLHttpRequest.prototype.open = originalXHR
+          resolve(urlString)
+          const asyncValue = async ?? true
+          originalXHR.call(this, method, url, asyncValue, username, password)
+          return
+        }
+        const asyncValue = async ?? true
+        originalXHR.call(this, method, url, asyncValue, username, password)
+      }
+
+      const retry = () => {
+        attempts++
+        if (attempts > 20) {
+          XMLHttpRequest.prototype.open = originalXHR
+          reject(new Error('Subtitle URL not found'))
+          return
+        }
+        this.toggleSubtitlesOn()
+        setTimeout(() => retry, 1000)
+      }
+
+      retry()
+    })
   }
 
-  private async retrieveSubtitle(caption: CaptionTrack): Promise<Subtitle[]> {
-    const response = await fetch(caption.baseUrl)
-    return parseTranscript(await response.text())
-  }
-
-  async fetchSubtitles(lang: GLOBAL_LANGUAGES): Promise<Subtitle[]> {
+  private async retrieveSubtitles(lang: GLOBAL_LANGUAGES): Promise<Subtitle[]> {
     const captions = await this.fetchCaptionTracks()
 
-    if (captions.length == 0) {
-      console.error('No caption tracks found')
+    const languageCode = this.languageCode[lang]
+    const subtitles = captions.find(
+      (track) => track.languageCode === languageCode
+    )
+
+    if (!subtitles) {
+      console.error('No subtitles found')
       return []
     }
 
-    const bestCaption = this.getBestCaption(captions, lang)
+    this.captionUrl = await this.getSubtitleUrl()
 
-    return await this.retrieveSubtitle(bestCaption)
+    const url = new URL(this.captionUrl)
+    url.searchParams.set('lang', languageCode)
+    try {
+      const response = await fetch(url.toString())
+      const data = (await response.json()) as YoutubeSubtitle
+      return parse(data)
+    } catch (error) {
+      console.error(error)
+      return []
+    }
+  }
+
+  async fetchSubtitles(lang: GLOBAL_LANGUAGES): Promise<Subtitle[]> {
+    return await this.retrieveSubtitles(lang)
   }
 
   getCurrentSubtitle(subtitles: Subtitle[], currentTime: number): string {
@@ -66,18 +124,18 @@ export class YoutubeSubtitlePlatform implements SubtitlePlatformInterface {
   }
 }
 
-type YoutubeContent = {
-  captions: Captions
-}
-
 type Captions = {
-  playerCaptionsTracklistRenderer: {
-    captionTracks: CaptionTrack[]
-  }
+  captionTracks: CaptionTrack[]
 }
 
 type CaptionTrack = {
-  baseUrl: string
   languageCode: string
   vssId: string
 }
+
+type YoutubePlayer = {
+  getAudioTrack: () => Captions
+  isSubtitlesOn: () => boolean
+  toggleSubtitles: () => void
+  toggleSubtitlesOn: () => void
+} & HTMLElement
