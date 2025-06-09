@@ -112,7 +112,7 @@ export class YoutubeSubtitlePlatform implements SubtitlePlatformInterface {
     try {
       const response = await fetch(url.toString())
       const data = (await response.json()) as YoutubeSubtitle
-      return parse(data)
+      return parse(data, 'html')
     } catch (error) {
       console.error(error)
       return []

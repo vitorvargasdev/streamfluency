@@ -5,7 +5,7 @@ let videoObserver: MutationObserver | null = null
 
 const injectApp = () => {
   const head = document.querySelector('head') as HTMLElement
-  const player = document.querySelector('#movie_player') as HTMLElement
+  const player = document.querySelector('ytd-player') as HTMLElement
   inject(PLATFORMS.YOUTUBE, head, player)
   setYoutubeCaptionsVisibility('none')
 }
