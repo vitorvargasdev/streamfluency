@@ -1,9 +1,17 @@
+export const enum PLATFORMS {
+  YOUTUBE = 'youtube',
+}
+
 export const isInjected = (path: string): boolean => {
   const app = document.querySelector(`${path} > #app`)
   return !!app
 }
 
-export const inject = (head: HTMLElement, parentApp: HTMLElement): void => {
+export const inject = (
+  platform: PLATFORMS,
+  head: HTMLElement,
+  parentApp: HTMLElement
+): void => {
   const timestamp = new Date().getTime()
 
   const css: HTMLLinkElement = document.createElement('link')
@@ -14,6 +22,7 @@ export const inject = (head: HTMLElement, parentApp: HTMLElement): void => {
 
   const app: HTMLDivElement = document.createElement('div')
   app.id = 'op-app'
+  app.setAttribute('platform', platform)
   app.style.position = 'absolute'
   app.style.webkitUserSelect = 'text'
   app.style.userSelect = 'text'
@@ -30,9 +39,9 @@ export const inject = (head: HTMLElement, parentApp: HTMLElement): void => {
 }
 
 export const remove = (): void => {
-  const css = document.querySelector("#op-css")
-  const app = document.querySelector("#op-app")
-  const script = document.querySelector("#op-script")
+  const css = document.querySelector('#op-css')
+  const app = document.querySelector('#op-app')
+  const script = document.querySelector('#op-script')
   css?.remove()
   app?.remove()
   script?.remove()

@@ -58,15 +58,23 @@ export class YoutubeSubtitlePlatform implements SubtitlePlatformInterface {
         password?: string | null
       ) {
         const urlString = url.toString()
-        if (urlString.includes('timedtext')) {
-          XMLHttpRequest.prototype.open = originalXHR
-          resolve(urlString)
-          const asyncValue = async ?? true
-          originalXHR.call(this, method, url, asyncValue, username, password)
-          return
-        }
         const asyncValue = async ?? true
+
+        if (!urlString.includes('timedtext')) {
+          return originalXHR.call(
+            this,
+            method,
+            url,
+            asyncValue,
+            username,
+            password
+          )
+        }
+
+        XMLHttpRequest.prototype.open = originalXHR
+        resolve(urlString)
         originalXHR.call(this, method, url, asyncValue, username, password)
+        return
       }
 
       const retry = () => {
@@ -104,7 +112,7 @@ export class YoutubeSubtitlePlatform implements SubtitlePlatformInterface {
     try {
       const response = await fetch(url.toString())
       const data = (await response.json()) as YoutubeSubtitle
-      return parse(data)
+      return parse(data, 'html')
     } catch (error) {
       console.error(error)
       return []

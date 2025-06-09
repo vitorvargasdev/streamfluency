@@ -1,0 +1,29 @@
+.panel {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  position: absolute;
+  pointer-events: none;
+  bottom: 0;
+
+  &__subtitle-display {
+    pointer-events: all;
+    position: relative;
+  }
+
+  &__toolbar {
+    pointer-events: all;
+    position: relative;
+    font-size: 24px;
+  }
+
+  &__subtitle-display--youtube {
+    bottom: 120px;
+  }
+
+  &__toolbar--youtube {
+    bottom: 120px;
+  }
+}

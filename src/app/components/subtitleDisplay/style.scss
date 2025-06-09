@@ -1,0 +1,38 @@
+.subtitle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 25px;
+
+  &__text {
+    font-size: 30px;
+    color: white;
+    text-shadow:
+      -1px -1px 0 black,
+      1px -1px 0 black,
+      -1px 1px 0 black,
+      1px 1px 0 black,
+      0 0 5px black;
+
+    &--blur {
+      filter: blur(4px);
+      transition: filter 0.2s ease-in-out;
+    }
+
+    &--blur:hover {
+      filter: blur(0);
+      transition: filter 0.1s ease-in-out;
+    }
+  }
+
+  &__primary {
+    height: 70px;
+    text-align: center;
+  }
+
+  &__secondary {
+    height: 70px;
+    text-align: center;
+  }
+}
