@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { useSubtitleStore } from '@/app/stores/subtitle'
 
-const nativeSubtitle = ref('lorem ipsum')
-const learningSubtitle = ref('lorem ipsum')
+const subtitleStore = useSubtitleStore()
 </script>
 
 <template>
   <div class="subtitle">
-    <div class="subtitle__primary subtitle__text" v-html="nativeSubtitle" />
-    <div v-if="learningSubtitle" class="subtitle__secondary subtitle__text" v-html="learningSubtitle" />
+    <div class="subtitle__primary subtitle__text" v-html="subtitleStore.getCurrentLearningSubtitle" />
+    <div v-if="subtitleStore.getCurrentNativeSubtitle" class="subtitle__secondary subtitle__text"
+      v-html="subtitleStore.getCurrentNativeSubtitle" />
   </div>
 </template>
 

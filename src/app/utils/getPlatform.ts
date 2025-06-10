@@ -1,6 +1,6 @@
 import { PLATFORM } from '../assets/constants'
 
-export default (): PLATFORM | undefined => {
+export default (): PLATFORM => {
   const app = document.querySelector('#op-app') as HTMLElement
   const platform = app.getAttribute('platform')
 

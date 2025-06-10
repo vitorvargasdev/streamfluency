@@ -123,12 +123,11 @@ export class YoutubeSubtitlePlatform implements SubtitlePlatformInterface {
     return await this.retrieveSubtitles(lang)
   }
 
-  getCurrentSubtitle(subtitles: Subtitle[], currentTime: number): string {
+  getCurrentSubtitle(subtitles: Subtitle[], currentTime: number): Subtitle | null {
     const activeSubtitles = subtitles
       .filter((sub) => currentTime >= sub.begin && currentTime <= sub.end)
-      .map((sub) => sub.text)
 
-    return activeSubtitles.at(-1) ?? ''
+    return activeSubtitles.at(-1) ?? null
   }
 }
 
