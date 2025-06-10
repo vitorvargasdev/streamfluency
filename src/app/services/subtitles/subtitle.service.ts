@@ -20,7 +20,7 @@ export class SubtitleService implements SubtitleInterface {
     return await this.platform.fetchSubtitles(lang)
   }
 
-  getCurrentSubtitle(subtitles: Subtitle[], currentTime: number): string {
+  getCurrentSubtitle(subtitles: Subtitle[], currentTime: number): Subtitle | null {
     return this.platform.getCurrentSubtitle(subtitles, currentTime)
   }
 }
