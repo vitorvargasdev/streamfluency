@@ -1,8 +1,13 @@
+<script setup lang="ts">
+import SettingButton from './SettingButton.vue';
+import LanguageSwitcher from './LanguageSwitcher.vue';
+</script>
+
 <template>
   <div class="side-button">
     <img class="side-button__icon" src="@/app/assets/images/texts.svg" />
-    <img class="side-button__icon" src="@/app/assets/images/languages.svg" />
-    <img class="side-button__icon" src="@/app/assets/images/settings.svg" />
+    <LanguageSwitcher />
+    <SettingButton />
   </div>
 </template>
 
