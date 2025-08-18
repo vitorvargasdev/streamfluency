@@ -1,17 +1,13 @@
 import { PlayerInterface } from '@/app/services/player/player.interface'
-import { YoutubePlayerPlatform } from '@/app/services/player/platforms/youtube'
 import { PLATFORM } from '@/app/assets/constants'
-import { PlayerPlatformInterface } from './platforms/player-platform.interface'
-
-const platforms = {
-  [PLATFORM.YOUTUBE]: YoutubePlayerPlatform,
-}
+import { IPlayerAdapter } from './adapters/IPlayerAdapter'
+import { PlayerAdapterFactory } from './PlayerAdapterFactory'
 
 export class PlayerService implements PlayerInterface {
-  platform: PlayerPlatformInterface
+  platform: IPlayerAdapter
 
   constructor(platform: PLATFORM) {
-    this.platform = new platforms[platform]
+    this.platform = PlayerAdapterFactory.create(platform)
   }
 
   play(): void {
@@ -32,5 +28,25 @@ export class PlayerService implements PlayerInterface {
 
   setTime(time: number): void {
     this.platform.setTime(time)
+  }
+
+  getDuration(): number {
+    return this.platform.getDuration()
+  }
+
+  getPlaybackRate(): number {
+    return this.platform.getPlaybackRate()
+  }
+
+  setPlaybackRate(rate: number): void {
+    this.platform.setPlaybackRate(rate)
+  }
+
+  isReady(): boolean {
+    return this.platform.isReady()
+  }
+
+  dispose(): void {
+    this.platform.dispose()
   }
 }

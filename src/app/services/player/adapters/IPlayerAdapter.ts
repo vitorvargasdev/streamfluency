@@ -1,7 +1,5 @@
-import { IPlayerAdapter } from '@/app/services/player/adapters/IPlayerAdapter'
-
-export interface PlayerInterface {
-  platform: IPlayerAdapter
+export interface IPlayerAdapter {
+  name: string
 
   // Playback controls
   play(): void
