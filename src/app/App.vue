@@ -7,13 +7,27 @@ import { useSettingStore } from '@/app/stores/setting'
 
 const playerStore = usePlayerStore()
 const subtitleStore = useSubtitleStore()
-const { nativeLanguage, learningLanguage } = useSettingStore()
+const settingStore = useSettingStore()
 
 onMounted(async () => {
+  // Load settings from localStorage first
+  settingStore.loadFromLocalStorage()
+
   playerStore.load()
   subtitleStore.load()
 
-  await subtitleStore.fetchSubtitles(nativeLanguage, learningLanguage)
+  // Hide native captions if OpenFluency is enabled
+  if (settingStore.isAppEnabled) {
+    subtitleStore.hideNativeCaptions()
+  } else {
+    subtitleStore.showNativeCaptions()
+  }
+
+  // Now use the loaded languages
+  await subtitleStore.fetchSubtitles(
+    settingStore.nativeLanguage,
+    settingStore.learningLanguage
+  )
   subtitleStore.setSubtitlesOn(true)
   subtitleStore.subtitlesOn()
 })
