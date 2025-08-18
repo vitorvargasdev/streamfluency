@@ -21,12 +21,16 @@ export const usePlayerStore = defineStore('player', {
       this.playerService.pause()
     },
     isPaused(): boolean {
-      if (!this.playerService) return true 
+      if (!this.playerService) return true
       return this.playerService.isPaused()
     },
     currentTime(): number {
       if (!this.playerService) return 0
       return this.playerService.currentTime()
+    },
+    seekTo(time: number): void {
+      if (!this.playerService) throw new Error('Player not loaded')
+      this.playerService.setTime(time)
     },
   },
 })
