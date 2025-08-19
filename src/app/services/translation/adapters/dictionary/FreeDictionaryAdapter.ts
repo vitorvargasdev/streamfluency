@@ -85,7 +85,7 @@ export class FreeDictionaryAdapter implements IDictionaryAdapter {
         word: entry.word || word,
         phonetic: entry.phonetic,
         audio: entry.phonetics?.[0]?.audio,
-        meanings: meanings.slice(0, 3), // Limit to 3 definitions
+        meanings: meanings, // Return all meanings, let the UI handle display
       }
     } catch (error) {
       console.error('FreeDictionary API error:', error)
