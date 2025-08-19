@@ -115,6 +115,7 @@ export const useSubtitleStore = defineStore('subtitle', {
       const playerStore = usePlayerStore()
 
       if (!playerStore.playerService) {
+        console.warn('Player service not available')
         return
       }
 
@@ -126,6 +127,7 @@ export const useSubtitleStore = defineStore('subtitle', {
           : this.subtitles.native
 
       if (subtitles.length === 0) {
+        console.warn('No subtitles available')
         return
       }
 
@@ -135,16 +137,18 @@ export const useSubtitleStore = defineStore('subtitle', {
       )
 
       if (currentIndex > 0) {
+        // Go to the previous subtitle
         playerStore.seekTo(subtitles[currentIndex - 1].begin)
       } else if (currentIndex === -1) {
-        // Find the last subtitle before current time
+        // We're between subtitles, find the last subtitle before current time
         for (let i = subtitles.length - 1; i >= 0; i--) {
           if (subtitles[i].end < currentTime) {
             playerStore.seekTo(subtitles[i].begin)
             break
           }
         }
-      } else {
+      } else if (currentIndex === 0) {
+        // We're at the first subtitle, stay at the beginning
         playerStore.seekTo(subtitles[0].begin)
       }
     },
@@ -189,6 +193,7 @@ export const useSubtitleStore = defineStore('subtitle', {
       const playerStore = usePlayerStore()
 
       if (!playerStore.playerService) {
+        console.warn('Player service not available')
         return
       }
 
@@ -200,6 +205,7 @@ export const useSubtitleStore = defineStore('subtitle', {
           : this.subtitles.native
 
       if (subtitles.length === 0) {
+        console.warn('No subtitles available')
         return
       }
 
@@ -209,15 +215,19 @@ export const useSubtitleStore = defineStore('subtitle', {
       )
 
       if (currentIndex !== -1 && currentIndex < subtitles.length - 1) {
+        // We're in a subtitle and there's a next one
         playerStore.seekTo(subtitles[currentIndex + 1].begin)
       } else if (currentIndex === -1) {
-        // Find the next subtitle after current time
+        // We're between subtitles, find the next one
         for (let i = 0; i < subtitles.length; i++) {
           if (subtitles[i].begin > currentTime) {
             playerStore.seekTo(subtitles[i].begin)
             break
           }
         }
+      } else if (currentIndex === subtitles.length - 1) {
+        // We're at the last subtitle, do nothing or could restart from beginning
+        console.log('Already at the last subtitle')
       }
     },
     toggleLoopSubtitle(): void {
