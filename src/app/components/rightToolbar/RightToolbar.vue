@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import SettingButton from './SettingButton.vue'
-import LanguageSwitcher from './LanguageSwitcher.vue'
 import NativeSubtitleToggle from './NativeSubtitleToggle.vue'
+import LearningSubtitleToggle from './LearningSubtitleToggle.vue'
 import SubtitleListButton from './SubtitleListButton.vue'
 import VocabularyButton from './VocabularyButton.vue'
 
@@ -16,8 +16,8 @@ const openSubtitleList = () => {
   <div class="side-button">
     <SubtitleListButton @openList="openSubtitleList" />
     <VocabularyButton />
+    <LearningSubtitleToggle />
     <NativeSubtitleToggle />
-    <LanguageSwitcher />
     <SettingButton />
   </div>
 </template>
