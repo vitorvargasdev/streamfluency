@@ -8,7 +8,7 @@ import type { BackupData, BackupMetadata, VocabularyItem } from './types'
 /**
  * Format date for backup filename
  * @param timestamp - Unix timestamp
- * @returns Formatted filename with openfluency prefix
+ * @returns Formatted filename with streamfluency prefix
  */
 export function formatBackupFilename(timestamp: number): string {
   const date = new Date(timestamp)
@@ -17,8 +17,8 @@ export function formatBackupFilename(timestamp: number): string {
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const year = date.getFullYear()
 
-  // Use openfluency prefix for all backups
-  const filename = `openfluency-${day}-${month}-${year}-${timestamp}${BACKUP_CONSTANTS.FILE_EXTENSION}`
+  // Use streamfluency prefix for all backups
+  const filename = `streamfluency-${day}-${month}-${year}-${timestamp}${BACKUP_CONSTANTS.FILE_EXTENSION}`
 
   return filename
 }
@@ -29,8 +29,8 @@ export function formatBackupFilename(timestamp: number): string {
  * @returns Backup metadata
  */
 export function parseBackupFilename(filename: string): BackupMetadata | null {
-  // New format: openfluency-DD-MM-YYYY-timestamp.json
-  const prefixRegex = /openfluency-(\d{2})-(\d{2})-(\d{4})-(\d+)\.json$/
+  // New format: streamfluency-DD-MM-YYYY-timestamp.json
+  const prefixRegex = /streamfluency-(\d{2})-(\d{2})-(\d{4})-(\d+)\.json$/
   const prefixMatch = filename.match(prefixRegex)
 
   if (prefixMatch) {

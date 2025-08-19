@@ -15,7 +15,7 @@ app.mount('#op-app')
 BackupService.getInstance()
   .initAutoBackup()
   .then(() => {
-    console.log('OpenFluency initialized with backup service')
+    console.log('StreamFluency initialized with backup service')
   })
   .catch((error) => {
     console.error('Failed to initialize backup service', error)

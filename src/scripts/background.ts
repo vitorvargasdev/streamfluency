@@ -126,4 +126,4 @@ async function downloadBackupFile(
 }
 
 // Log when background script loads
-console.log('OpenFluency background script loaded (fixed version)')
+console.log('StreamFluency background script loaded (fixed version)')

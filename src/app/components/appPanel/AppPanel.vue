@@ -100,9 +100,9 @@ onUnmounted(() => {
         <img
           @click="togglePower"
           class="panel__power-off-button"
-          src="@/app/assets/images/openfluency-logo.svg"
-          title="Ativar OpenFluency"
-          alt="OpenFluency"
+          src="@/app/assets/images/streamfluency-logo.svg"
+          title="Ativar StreamFluency"
+          alt="StreamFluency"
         />
         <span class="panel__power-off-indicator"></span>
       </div>

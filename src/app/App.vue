@@ -16,7 +16,7 @@ onMounted(async () => {
   playerStore.load()
   subtitleStore.load()
 
-  // Hide native captions if OpenFluency is enabled
+  // Hide native captions if StreamFluency is enabled
   if (settingStore.isAppEnabled) {
     subtitleStore.hideNativeCaptions()
   } else {

@@ -84,9 +84,9 @@ watch(
     <template #body>
       <div class="language-selector">
         <div class="language-selector__group">
-          <label class="openfluency-select-label">Idioma Nativo:</label>
+          <label class="streamfluency-select-label">Idioma Nativo:</label>
           <select
-            class="openfluency-select"
+            class="streamfluency-select"
             v-model="selectedNative"
             :disabled="isLoading"
           >
@@ -101,9 +101,9 @@ watch(
         </div>
 
         <div class="language-selector__group">
-          <label class="openfluency-select-label">Aprendendo:</label>
+          <label class="streamfluency-select-label">Aprendendo:</label>
           <select
-            class="openfluency-select"
+            class="streamfluency-select"
             v-model="selectedLearning"
             :disabled="isLoading"
           >

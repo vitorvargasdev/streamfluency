@@ -238,9 +238,9 @@ defineExpose({
 
           <div class="language-selector">
             <div class="language-selector__group">
-              <label class="openfluency-select-label">Idioma Nativo:</label>
+              <label class="streamfluency-select-label">Idioma Nativo:</label>
               <select
-                class="openfluency-select"
+                class="streamfluency-select"
                 v-model="selectedNative"
                 @change="onLanguageChange"
                 :disabled="isLanguageLoading"
@@ -256,9 +256,9 @@ defineExpose({
             </div>
 
             <div class="language-selector__group">
-              <label class="openfluency-select-label">Aprendendo:</label>
+              <label class="streamfluency-select-label">Aprendendo:</label>
               <select
-                class="openfluency-select"
+                class="streamfluency-select"
                 v-model="selectedLearning"
                 @change="onLanguageChange"
                 :disabled="isLanguageLoading"
@@ -296,9 +296,9 @@ defineExpose({
       <div v-if="activeTab === 'providers'" class="tab-content">
         <!-- Translation Provider Section -->
         <div class="config-section">
-          <label class="openfluency-select-label">Serviço de Tradução</label>
+          <label class="streamfluency-select-label">Serviço de Tradução</label>
           <select
-            class="openfluency-select"
+            class="streamfluency-select"
             v-model="selectedTranslation"
             @change="onTranslationChange"
           >
@@ -317,9 +317,11 @@ defineExpose({
 
         <!-- Dictionary Provider Section -->
         <div class="config-section">
-          <label class="openfluency-select-label">Serviço de Dicionário</label>
+          <label class="streamfluency-select-label"
+            >Serviço de Dicionário</label
+          >
           <select
-            class="openfluency-select"
+            class="streamfluency-select"
             v-model="selectedDictionary"
             @change="onDictionaryChange"
           >
@@ -335,9 +337,9 @@ defineExpose({
 
         <!-- Target Language Section -->
         <div class="config-section">
-          <label class="openfluency-select-label">Idioma de Tradução</label>
+          <label class="streamfluency-select-label">Idioma de Tradução</label>
           <select
-            class="openfluency-select"
+            class="streamfluency-select"
             v-model="targetLanguage"
             @change="onTargetLanguageChange"
           >
@@ -410,9 +412,9 @@ defineExpose({
 
           <div v-if="autoBackupEnabled" class="auto-backup-settings">
             <div class="setting-row">
-              <label class="openfluency-select-label">Frequência</label>
+              <label class="streamfluency-select-label">Frequência</label>
               <select
-                class="openfluency-select"
+                class="streamfluency-select"
                 v-model="backupFrequency"
                 @change="onBackupFrequencyChange"
               >
@@ -423,9 +425,11 @@ defineExpose({
             </div>
 
             <div class="setting-row">
-              <label class="openfluency-select-label">Máximo de backups</label>
+              <label class="streamfluency-select-label"
+                >Máximo de backups</label
+              >
               <select
-                class="openfluency-select"
+                class="streamfluency-select"
                 v-model="maxBackups"
                 @change="onMaxBackupsChange"
               >
@@ -448,7 +452,7 @@ defineExpose({
               </label>
               <p class="config-note">
                 Os backups automáticos serão salvos em
-                Downloads/openfluency-backups-auto/
+                Downloads/streamfluency-backups-auto/
               </p>
             </div>
           </div>
@@ -458,8 +462,8 @@ defineExpose({
         <div class="info-section">
           <p class="info-text">
             O backup automático salva suas palavras e configurações
-            periodicamente. Backups manuais: Downloads/openfluency-backups/
-            Backups automáticos: Downloads/openfluency-backups-auto/
+            periodicamente. Backups manuais: Downloads/streamfluency-backups/
+            Backups automáticos: Downloads/streamfluency-backups-auto/
           </p>
         </div>
       </div>

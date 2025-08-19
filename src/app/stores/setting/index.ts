@@ -3,7 +3,8 @@ import { State } from './types'
 import { GLOBAL_LANGUAGES } from '@/app/assets/constants'
 import { useSubtitleStore } from '@/app/stores/subtitle'
 
-const STORAGE_KEY = 'openfluency_settings'
+const STORAGE_KEY = 'streamfluency_settings'
+const OLD_STORAGE_KEY = 'openfluency_settings' // For migration
 
 export const useSettingStore = defineStore('setting', {
   state: (): State => ({
@@ -66,7 +67,19 @@ export const useSettingStore = defineStore('setting', {
     },
 
     loadFromLocalStorage(): boolean {
-      const stored = localStorage.getItem(STORAGE_KEY)
+      // Try to load from new key first
+      let stored = localStorage.getItem(STORAGE_KEY)
+
+      // If not found, try to migrate from old key
+      if (!stored) {
+        const oldStored = localStorage.getItem(OLD_STORAGE_KEY)
+        if (oldStored) {
+          localStorage.setItem(STORAGE_KEY, oldStored)
+          localStorage.removeItem(OLD_STORAGE_KEY)
+          stored = oldStored
+        }
+      }
+
       if (stored) {
         try {
           const data = JSON.parse(stored)

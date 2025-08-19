@@ -5,12 +5,12 @@
 export const BACKUP_CONSTANTS = {
   VERSION: '1.0.0',
   STORAGE_KEYS: {
-    AUTO_BACKUPS: 'openfluency_auto_backups',
-    CONFIG: 'openfluency_auto_backup_config',
+    AUTO_BACKUPS: 'streamfluency_auto_backups',
+    CONFIG: 'streamfluency_auto_backup_config',
   },
   FOLDERS: {
-    MANUAL: 'openfluency-backups',
-    AUTO: 'openfluency-backups-auto',
+    MANUAL: 'streamfluency-backups',
+    AUTO: 'streamfluency-backups-auto',
   },
   LIMITS: {
     MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB

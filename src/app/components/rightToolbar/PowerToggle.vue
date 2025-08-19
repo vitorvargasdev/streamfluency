@@ -16,8 +16,8 @@ const togglePower = () => {
     <img
       class="power-toggle__logo"
       @click="togglePower"
-      src="@/app/assets/images/openfluency-logo.svg"
-      :title="isEnabled ? 'Desligar OpenFluency' : 'Ligar OpenFluency'"
+      src="@/app/assets/images/streamfluency-logo.svg"
+      :title="isEnabled ? 'Desligar StreamFluency' : 'Ligar StreamFluency'"
     />
     <span
       class="power-toggle__indicator"

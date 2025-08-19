@@ -17,7 +17,7 @@ export class PlatformScript {
       inject(this.adapter.platform, head, player)
       this.isInjected = true
     } catch (error) {
-      console.error('OpenFluency: Failed to inject app', error)
+      console.error('StreamFluency: Failed to inject app', error)
     }
   }
 
@@ -36,7 +36,7 @@ export class PlatformScript {
       const elements = await this.adapter.waitForElements()
       if (elements.video.src) {
         console.log(
-          `OpenFluency: Injecting on ${this.adapter.platform} page load after delay`
+          `StreamFluency: Injecting on ${this.adapter.platform} page load after delay`
         )
         await this.injectApp()
       }

@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
 import type { VocabularyItem, VocabularyState } from './types'
 
-const STORAGE_KEY = 'openfluency_vocabulary'
+const STORAGE_KEY = 'streamfluency_vocabulary'
+const OLD_STORAGE_KEY = 'openfluency_vocabulary' // For migration
 
 export const useVocabularyStore = defineStore('vocabulary', {
   state: (): VocabularyState => ({
@@ -37,7 +38,18 @@ export const useVocabularyStore = defineStore('vocabulary', {
     async init() {
       try {
         this.isLoading = true
-        const stored = localStorage.getItem(STORAGE_KEY)
+        let stored = localStorage.getItem(STORAGE_KEY)
+
+        // Try to migrate from old key if not found
+        if (!stored) {
+          const oldStored = localStorage.getItem(OLD_STORAGE_KEY)
+          if (oldStored) {
+            localStorage.setItem(STORAGE_KEY, oldStored)
+            localStorage.removeItem(OLD_STORAGE_KEY)
+            stored = oldStored
+          }
+        }
+
         if (stored) {
           this.items = JSON.parse(stored)
         }
