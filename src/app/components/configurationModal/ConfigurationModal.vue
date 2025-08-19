@@ -6,6 +6,7 @@ import { DictionaryAdapterFactory } from '@/app/services/translation/factories/D
 import { BackupService } from '../../services/backup'
 import type { AutoBackupConfig } from '../../services/backup'
 import GenericModal from '../genericModal/GenericModal.vue'
+import { GLOBAL_LANGUAGES } from '@/app/assets/constants'
 
 const emit = defineEmits<{
   close: []
@@ -14,7 +15,29 @@ const emit = defineEmits<{
 const settingStore = useSettingStore()
 const backupService = BackupService.getInstance()
 const isVisible = ref(false)
-const activeTab = ref<'providers' | 'backup'>('providers')
+const activeTab = ref<'languages' | 'providers' | 'backup' | 'keyboard'>(
+  'languages'
+)
+
+// Language settings
+const selectedNative = ref(settingStore.nativeLanguage)
+const selectedLearning = ref(settingStore.learningLanguage)
+const languageErrorMessage = ref('')
+const isLanguageLoading = ref(false)
+
+const languageLabels = {
+  [GLOBAL_LANGUAGES.EN]: 'Inglês',
+  [GLOBAL_LANGUAGES.ES]: 'Espanhol',
+  [GLOBAL_LANGUAGES.PTBR]: 'Português (BR)',
+  [GLOBAL_LANGUAGES.JA]: 'Japonês',
+}
+
+const availableLanguages = computed(() => [
+  GLOBAL_LANGUAGES.EN,
+  GLOBAL_LANGUAGES.ES,
+  GLOBAL_LANGUAGES.PTBR,
+  GLOBAL_LANGUAGES.JA,
+])
 
 // Provider selections
 const selectedTranslation = ref('')
@@ -28,6 +51,9 @@ const autoDownload = ref(true)
 const backupFrequency = ref<'hourly' | 'daily' | 'weekly'>('daily')
 const maxBackups = ref(7)
 
+// Keyboard refs
+const arrowKeyNavigationEnabled = ref(false)
+
 // Available providers
 const translationProviders = computed(() =>
   TranslationAdapterFactory.getAvailableAdapters()
@@ -35,6 +61,28 @@ const translationProviders = computed(() =>
 const dictionaryProviders = computed(() =>
   DictionaryAdapterFactory.getAvailableAdapters()
 )
+
+// Language change handler
+const onLanguageChange = async () => {
+  if (selectedNative.value === selectedLearning.value) {
+    languageErrorMessage.value = 'Os idiomas devem ser diferentes'
+    return
+  }
+
+  isLanguageLoading.value = true
+  languageErrorMessage.value = ''
+
+  try {
+    await settingStore.setLanguages(
+      selectedNative.value,
+      selectedLearning.value
+    )
+  } catch (error) {
+    languageErrorMessage.value = 'Erro ao carregar legendas'
+  } finally {
+    isLanguageLoading.value = false
+  }
+}
 
 // Provider event handlers
 const onTranslationChange = () => {
@@ -96,7 +144,15 @@ const onAutoBackupToggle = () => updateBackupConfig()
 const onBackupFrequencyChange = () => updateBackupConfig()
 const onMaxBackupsChange = () => updateBackupConfig()
 
+const onArrowKeyNavigationToggle = () => {
+  settingStore.toggleArrowKeyNavigation()
+}
+
 const loadSettings = () => {
+  // Load language settings
+  selectedNative.value = settingStore.nativeLanguage
+  selectedLearning.value = settingStore.learningLanguage
+
   // Load provider settings
   selectedTranslation.value = settingStore.providers.translation
   selectedDictionary.value = settingStore.providers.dictionary
@@ -108,6 +164,9 @@ const loadSettings = () => {
   backupFrequency.value = backupConfig.frequency
   maxBackups.value = backupConfig.maxBackups
   autoDownload.value = backupConfig.autoDownload
+
+  // Load keyboard settings
+  arrowKeyNavigationEnabled.value = settingStore.isArrowKeyNavigationEnabled
 }
 
 const show = () => {
@@ -144,6 +203,13 @@ defineExpose({
       <div class="tabs">
         <button
           class="tab"
+          :class="{ active: activeTab === 'languages' }"
+          @click="activeTab = 'languages'"
+        >
+          Idiomas
+        </button>
+        <button
+          class="tab"
           :class="{ active: activeTab === 'providers' }"
           @click="activeTab = 'providers'"
         >
@@ -156,6 +222,74 @@ defineExpose({
         >
           Backup
         </button>
+        <button
+          class="tab"
+          :class="{ active: activeTab === 'keyboard' }"
+          @click="activeTab = 'keyboard'"
+        >
+          Teclado
+        </button>
+      </div>
+
+      <!-- Languages Tab Content -->
+      <div v-if="activeTab === 'languages'" class="tab-content">
+        <div class="config-section">
+          <h3 class="section-title">Configuração de Idiomas</h3>
+
+          <div class="language-selector">
+            <div class="language-selector__group">
+              <label class="openfluency-select-label">Idioma Nativo:</label>
+              <select
+                class="openfluency-select"
+                v-model="selectedNative"
+                @change="onLanguageChange"
+                :disabled="isLanguageLoading"
+              >
+                <option
+                  v-for="lang in availableLanguages"
+                  :key="lang"
+                  :value="lang"
+                >
+                  {{ languageLabels[lang] }}
+                </option>
+              </select>
+            </div>
+
+            <div class="language-selector__group">
+              <label class="openfluency-select-label">Aprendendo:</label>
+              <select
+                class="openfluency-select"
+                v-model="selectedLearning"
+                @change="onLanguageChange"
+                :disabled="isLanguageLoading"
+              >
+                <option
+                  v-for="lang in availableLanguages"
+                  :key="lang"
+                  :value="lang"
+                >
+                  {{ languageLabels[lang] }}
+                </option>
+              </select>
+            </div>
+
+            <div v-if="languageErrorMessage" class="language-selector__error">
+              {{ languageErrorMessage }}
+            </div>
+
+            <div v-if="isLanguageLoading" class="language-selector__loading">
+              Carregando legendas...
+            </div>
+          </div>
+        </div>
+
+        <!-- Info Section -->
+        <div class="info-section">
+          <p class="info-text">
+            Selecione seu idioma nativo e o idioma que está aprendendo. As
+            legendas serão carregadas automaticamente quando disponíveis.
+          </p>
+        </div>
       </div>
 
       <!-- Providers Tab Content -->
@@ -329,6 +463,50 @@ defineExpose({
           </p>
         </div>
       </div>
+
+      <!-- Keyboard Tab Content -->
+      <div v-if="activeTab === 'keyboard'" class="tab-content">
+        <div class="config-section">
+          <h3 class="section-title">Atalhos de Teclado</h3>
+
+          <div class="keyboard-setting">
+            <label class="toggle-label">
+              <input
+                type="checkbox"
+                v-model="arrowKeyNavigationEnabled"
+                @change="onArrowKeyNavigationToggle"
+              />
+              <span>Navegação com setas do teclado</span>
+            </label>
+            <p class="config-note">
+              Use as setas ← → para navegar entre legendas anteriores e próximas
+            </p>
+          </div>
+
+          <div class="shortcuts-info">
+            <h4>Atalhos disponíveis:</h4>
+            <ul class="shortcuts-list">
+              <li v-if="arrowKeyNavigationEnabled">
+                <kbd>←</kbd> Legenda anterior
+              </li>
+              <li v-if="arrowKeyNavigationEnabled">
+                <kbd>→</kbd> Próxima legenda
+              </li>
+            </ul>
+            <p class="config-note" v-if="!arrowKeyNavigationEnabled">
+              Ative a navegação com setas para ver os atalhos disponíveis
+            </p>
+          </div>
+        </div>
+
+        <!-- Info Section -->
+        <div class="info-section">
+          <p class="info-text">
+            Os atalhos de teclado permitem navegar rapidamente entre as
+            legendas. As configurações são salvas automaticamente.
+          </p>
+        </div>
+      </div>
     </template>
   </GenericModal>
 </template>
@@ -495,6 +673,98 @@ defineExpose({
     font-size: 13px;
     line-height: 1.6;
     margin: 0;
+  }
+}
+
+.keyboard-setting {
+  margin-bottom: 20px;
+
+  .toggle-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+
+    input[type='checkbox'] {
+      margin-right: 8px;
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    span {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 14px;
+    }
+  }
+}
+
+.language-selector {
+  &__group {
+    margin-bottom: 20px;
+  }
+
+  &__error {
+    color: #ff6b6b;
+    font-size: 14px;
+    margin-top: 10px;
+    padding: 8px;
+    background: rgba(255, 107, 107, 0.1);
+    border-radius: 4px;
+    text-align: center;
+  }
+
+  &__loading {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    margin-top: 10px;
+    text-align: center;
+    opacity: 0.8;
+  }
+}
+
+.shortcuts-info {
+  margin-top: 24px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  h4 {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+  }
+
+  .shortcuts-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 13px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      kbd {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        padding: 2px 8px;
+        font-family: monospace;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.9);
+        min-width: 24px;
+        text-align: center;
+      }
+    }
   }
 }
 </style>
