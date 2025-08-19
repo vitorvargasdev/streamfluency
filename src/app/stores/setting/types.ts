@@ -7,6 +7,7 @@ export interface State {
   }
   blurNativeSubtitle: boolean
   showNativeSubtitle: boolean
+  showLearningSubtitle: boolean
   isFirstTimeUser: boolean
   isEnabled: boolean
   subtitleViewMode: 'unified' | 'tabs'
@@ -15,4 +16,5 @@ export interface State {
     dictionary: string
     targetLanguage: string
   }
+  enableArrowKeyNavigation: boolean
 }

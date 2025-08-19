@@ -13,6 +13,7 @@ export const useSettingStore = defineStore('setting', {
     },
     blurNativeSubtitle: true,
     showNativeSubtitle: true,
+    showLearningSubtitle: true,
     isFirstTimeUser: true,
     isEnabled: true,
     subtitleViewMode: 'unified',
@@ -21,6 +22,7 @@ export const useSettingStore = defineStore('setting', {
       dictionary: 'freedictionary',
       targetLanguage: 'pt',
     },
+    enableArrowKeyNavigation: false,
   }),
   getters: {
     nativeLanguage(state) {
@@ -35,11 +37,17 @@ export const useSettingStore = defineStore('setting', {
     isNativeSubtitleVisible(state) {
       return state.showNativeSubtitle
     },
+    isLearningSubtitleVisible(state) {
+      return state.showLearningSubtitle
+    },
     isAppEnabled(state) {
       return state.isEnabled
     },
     getSubtitleViewMode(state) {
       return state.subtitleViewMode
+    },
+    isArrowKeyNavigationEnabled(state) {
+      return state.enableArrowKeyNavigation
     },
   },
   actions: {
@@ -48,9 +56,11 @@ export const useSettingStore = defineStore('setting', {
         languages: this.languages,
         blurNativeSubtitle: this.blurNativeSubtitle,
         showNativeSubtitle: this.showNativeSubtitle,
+        showLearningSubtitle: this.showLearningSubtitle,
         isEnabled: this.isEnabled,
         subtitleViewMode: this.subtitleViewMode,
         providers: this.providers,
+        enableArrowKeyNavigation: this.enableArrowKeyNavigation,
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
     },
@@ -65,8 +75,12 @@ export const useSettingStore = defineStore('setting', {
             data.blurNativeSubtitle ?? this.blurNativeSubtitle
           this.showNativeSubtitle =
             data.showNativeSubtitle ?? this.showNativeSubtitle
+          this.showLearningSubtitle =
+            data.showLearningSubtitle ?? this.showLearningSubtitle
           this.isEnabled = data.isEnabled ?? this.isEnabled
           this.subtitleViewMode = data.subtitleViewMode ?? this.subtitleViewMode
+          this.enableArrowKeyNavigation =
+            data.enableArrowKeyNavigation ?? this.enableArrowKeyNavigation
           // Ensure providers are properly loaded with defaults
           this.providers = {
             translation: data.providers?.translation || 'mymemory',
@@ -122,6 +136,11 @@ export const useSettingStore = defineStore('setting', {
       this.saveToLocalStorage()
     },
 
+    toggleLearningSubtitleVisibility() {
+      this.showLearningSubtitle = !this.showLearningSubtitle
+      this.saveToLocalStorage()
+    },
+
     toggleAppEnabled() {
       this.isEnabled = !this.isEnabled
       this.saveToLocalStorage()
@@ -152,6 +171,11 @@ export const useSettingStore = defineStore('setting', {
 
     setTargetLanguage(language: string) {
       this.providers.targetLanguage = language
+      this.saveToLocalStorage()
+    },
+
+    toggleArrowKeyNavigation() {
+      this.enableArrowKeyNavigation = !this.enableArrowKeyNavigation
       this.saveToLocalStorage()
     },
   },
