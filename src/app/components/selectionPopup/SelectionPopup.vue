@@ -7,7 +7,13 @@ import { translationService } from '../../services/translation/translation.servi
 import type {
   DictionaryResult,
   TranslationResult,
+  DictionaryDefinition,
 } from '../../services/translation/types'
+import type { VocabularyItem } from '../../stores/vocabulary/types'
+
+const props = defineProps<{
+  mode?: 'selection' | 'vocabulary'
+}>()
 
 const vocabularyStore = useVocabularyStore()
 const playerStore = usePlayerStore()
@@ -25,6 +31,13 @@ const isSingleWord = ref(false)
 const isTranslating = ref(false)
 const translationData = ref<TranslationResult | null>(null)
 const targetLanguage = ref('Português')
+const isTranslatingContext = ref(false)
+const contextTranslationData = ref<TranslationResult | null>(null)
+const translatedMeanings = ref<
+  Map<number, { definition?: string; example?: string }>
+>(new Map())
+const loadingTranslations = ref<Set<number>>(new Set())
+const showAllMeanings = ref(false)
 
 // Dragging state
 const isDragging = ref(false)
@@ -34,7 +47,9 @@ const dragOffset = ref({ x: 0, y: 0 })
 let showDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
 const alreadyExists = computed(() => {
-  return vocabularyStore.checkIfExists(selectedText.value)
+  return props.mode === 'vocabulary'
+    ? true
+    : vocabularyStore.checkIfExists(selectedText.value)
 })
 
 const popupStyle = computed(() => ({
@@ -131,6 +146,11 @@ const hide = () => {
   isSingleWord.value = false
   isTranslating.value = false
   translationData.value = null
+  isTranslatingContext.value = false
+  contextTranslationData.value = null
+  translatedMeanings.value.clear()
+  loadingTranslations.value.clear()
+  showAllMeanings.value = false
 }
 
 const handleSave = async () => {
@@ -158,6 +178,123 @@ const handleSave = async () => {
   } catch (error) {
     console.error('Failed to save vocabulary item:', error)
     isSaving.value = false
+  }
+}
+
+// Show vocabulary item (for vocabulary mode)
+const showVocabularyItem = (item: VocabularyItem) => {
+  selectedText.value = item.text
+  contextText.value = item.context || ''
+  dictionaryData.value = null
+  isSingleWord.value = translationService.isSingleWord(item.text)
+
+  // Center horizontally, top of screen
+  const popupWidth = 400
+  const viewportWidth = window.innerWidth
+  const topOffset = 100
+
+  position.value = {
+    x: (viewportWidth - popupWidth) / 2,
+    y: topOffset,
+  }
+
+  isVisible.value = true
+
+  // Fetch dictionary definition
+  isLoading.value = true
+  translationService
+    .getDefinition(item.text)
+    .then((result) => {
+      dictionaryData.value = result
+    })
+    .catch((error) => {
+      console.error('Error fetching definition:', error)
+    })
+    .finally(() => {
+      isLoading.value = false
+    })
+
+  // Fetch translation
+  isTranslating.value = true
+  translationData.value = null
+  translationService
+    .translate(item.text, 'en', settingStore.providers.targetLanguage)
+    .then((result) => {
+      translationData.value = result
+    })
+    .catch((error) => {
+      console.error('Error fetching translation:', error)
+    })
+    .finally(() => {
+      isTranslating.value = false
+    })
+}
+
+// Translate context/sentence
+const translateContext = async () => {
+  if (!contextText.value || isTranslatingContext.value) return
+
+  isTranslatingContext.value = true
+  try {
+    const result = await translationService.translate(
+      contextText.value,
+      'en',
+      settingStore.providers.targetLanguage
+    )
+    contextTranslationData.value = result
+  } catch (error) {
+    console.error('Error translating context:', error)
+  } finally {
+    isTranslatingContext.value = false
+  }
+}
+
+// Translate individual meaning
+const translateMeaning = async (
+  index: number,
+  meaning: DictionaryDefinition
+) => {
+  if (loadingTranslations.value.has(index)) return
+
+  loadingTranslations.value.add(index)
+
+  try {
+    // Translate definition
+    const definitionResult = await translationService.translate(
+      meaning.definition,
+      'en',
+      settingStore.providers.targetLanguage
+    )
+
+    // Translate example if exists
+    let exampleResult = null
+    if (meaning.example) {
+      exampleResult = await translationService.translate(
+        meaning.example,
+        'en',
+        settingStore.providers.targetLanguage
+      )
+    }
+
+    translatedMeanings.value.set(index, {
+      definition: definitionResult?.translatedText,
+      example: exampleResult?.translatedText,
+    })
+  } catch (error) {
+    console.error('Error translating meaning:', error)
+  } finally {
+    loadingTranslations.value.delete(index)
+  }
+}
+
+// Open FreeDictionary
+const openFreeDictionary = () => {
+  if (
+    settingStore.providers.dictionary === 'freedictionary' &&
+    selectedText.value
+  ) {
+    const url = `https://www.thefreedictionary.com/${encodeURIComponent(selectedText.value)}`
+    window.open(url, '_blank')
   }
 }
 
@@ -263,7 +400,10 @@ const handleSelectionChange = () => {
 
 onMounted(() => {
   document.addEventListener('mousedown', handleClickOutside)
-  document.addEventListener('selectionchange', handleSelectionChange)
+  // Only add selection listener if in selection mode (not vocabulary mode)
+  if (props.mode !== 'vocabulary') {
+    document.addEventListener('selectionchange', handleSelectionChange)
+  }
   document.addEventListener('mousemove', onDrag)
   document.addEventListener('mouseup', stopDrag)
   document.addEventListener('touchmove', onDrag)
@@ -329,7 +469,9 @@ onUnmounted(() => {
   }
 
   document.removeEventListener('mousedown', handleClickOutside)
-  document.removeEventListener('selectionchange', handleSelectionChange)
+  if (props.mode !== 'vocabulary') {
+    document.removeEventListener('selectionchange', handleSelectionChange)
+  }
   document.removeEventListener('mousemove', onDrag)
   document.removeEventListener('mouseup', stopDrag)
   document.removeEventListener('touchmove', onDrag)
@@ -339,6 +481,7 @@ onUnmounted(() => {
 defineExpose({
   show,
   hide,
+  showVocabularyItem,
 })
 </script>
 
@@ -353,10 +496,45 @@ defineExpose({
       @mousedown.stop
     >
       <div class="popup-header" @mousedown="startDrag" @touchstart="startDrag">
-        <div class="selected-text">{{ selectedText }}</div>
+        <div class="header-content">
+          <div class="selected-text">{{ selectedText }}</div>
+          <button
+            v-if="settingStore.providers.dictionary === 'freedictionary'"
+            class="dictionary-link"
+            @click.stop="openFreeDictionary"
+            title="Abrir no FreeDictionary"
+          >
+            📖
+          </button>
+        </div>
         <button class="close-btn" @click="hide" title="Fechar">×</button>
       </div>
       <div class="popup-content">
+        <!-- Context section with translation (only in vocabulary mode) -->
+        <div
+          v-if="contextText && props.mode === 'vocabulary'"
+          class="context-section"
+        >
+          <div class="context-header">
+            <div class="context-label">Contexto</div>
+            <button
+              @click="translateContext"
+              class="translate-context-btn"
+              :disabled="isTranslatingContext"
+              title="Traduzir frase de contexto"
+            >
+              {{ isTranslatingContext ? '⏳' : '🌐' }} Traduzir Frase
+            </button>
+          </div>
+          <div class="context-text">"{{ contextText }}"</div>
+          <div v-if="contextTranslationData" class="context-translation">
+            <div class="translation-label">Tradução do contexto</div>
+            <div class="translated-text">
+              "{{ contextTranslationData.translatedText }}"
+            </div>
+          </div>
+        </div>
+
         <div v-if="translationData" class="translation-section">
           <div class="translation-label">Tradução ({{ targetLanguage }})</div>
           <div class="translation-text">
@@ -387,18 +565,63 @@ defineExpose({
 
           <div class="definitions">
             <div
-              v-for="(meaning, index) in dictionaryData.meanings.slice(0, 2)"
+              v-for="(meaning, index) in showAllMeanings
+                ? dictionaryData.meanings
+                : dictionaryData.meanings.slice(0, 3)"
               :key="index"
               class="definition-item"
             >
-              <span v-if="meaning.partOfSpeech" class="part-of-speech">{{
-                meaning.partOfSpeech
-              }}</span>
+              <div class="definition-header">
+                <span v-if="meaning.partOfSpeech" class="part-of-speech">{{
+                  meaning.partOfSpeech
+                }}</span>
+                <button
+                  class="translate-btn"
+                  @click="translateMeaning(index, meaning)"
+                  :disabled="loadingTranslations.has(index)"
+                  title="Traduzir definição"
+                >
+                  {{ loadingTranslations.has(index) ? '⏳' : '🌐' }}
+                </button>
+              </div>
+
               <span class="definition">{{ meaning.definition }}</span>
+
+              <!-- Show translation if available -->
+              <div
+                v-if="translatedMeanings.has(index)"
+                class="translated-content"
+              >
+                <span class="translated-definition">
+                  {{ translatedMeanings.get(index)?.definition }}
+                </span>
+              </div>
+
               <span v-if="meaning.example" class="example"
                 >"{{ meaning.example }}"</span
               >
+
+              <!-- Translation of example -->
+              <div
+                v-if="translatedMeanings.has(index) && meaning.example"
+                class="translated-example"
+              >
+                "{{ translatedMeanings.get(index)?.example }}"
+              </div>
             </div>
+
+            <!-- Show more/less button -->
+            <button
+              v-if="dictionaryData.meanings.length > 3"
+              class="show-more-btn"
+              @click="showAllMeanings = !showAllMeanings"
+            >
+              {{
+                showAllMeanings
+                  ? '− Mostrar menos'
+                  : `+ Mostrar mais ${dictionaryData.meanings.length - 3} significados`
+              }}
+            </button>
           </div>
         </div>
 
@@ -406,7 +629,7 @@ defineExpose({
           Nenhuma definição encontrada
         </div>
 
-        <div class="actions">
+        <div v-if="props.mode !== 'vocabulary'" class="actions">
           <button class="save-button" @click="handleSave" :disabled="isSaving">
             {{
               isSaving ? 'Salvando...' : alreadyExists ? 'Já salvo ✓' : 'Salvar'
@@ -461,13 +684,35 @@ defineExpose({
       );
     }
 
-    .selected-text {
-      color: #667eea;
-      font-size: 16px;
-      font-weight: 600;
-      word-break: break-word;
+    .header-content {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       flex: 1;
       margin-right: 10px;
+
+      .selected-text {
+        color: #667eea;
+        font-size: 16px;
+        font-weight: 600;
+        word-break: break-word;
+      }
+
+      .dictionary-link {
+        background: rgba(102, 126, 234, 0.2);
+        border: 1px solid rgba(102, 126, 234, 0.3);
+        border-radius: 6px;
+        padding: 4px 8px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.2s;
+        flex-shrink: 0;
+
+        &:hover {
+          background: rgba(102, 126, 234, 0.3);
+          transform: scale(1.05);
+        }
+      }
     }
 
     .close-btn {
@@ -567,6 +812,32 @@ defineExpose({
           transform: translateX(2px);
         }
 
+        .definition-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 6px;
+
+          .translate-btn {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 4px;
+            padding: 2px 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+
+            &:hover:not(:disabled) {
+              background: rgba(102, 126, 234, 0.2);
+            }
+
+            &:disabled {
+              opacity: 0.6;
+              cursor: not-allowed;
+            }
+          }
+        }
+
         .part-of-speech {
           display: inline-block;
           color: #667eea;
@@ -598,6 +869,50 @@ defineExpose({
           background: rgba(0, 0, 0, 0.2);
           border-radius: 6px;
         }
+
+        .translated-content {
+          margin-top: 8px;
+          padding: 8px;
+          background: rgba(102, 126, 234, 0.05);
+          border-left: 2px solid rgba(102, 126, 234, 0.3);
+          border-radius: 4px;
+
+          .translated-definition {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 13px;
+            font-style: italic;
+          }
+        }
+
+        .translated-example {
+          margin-top: 4px;
+          padding: 6px 12px;
+          background: rgba(102, 126, 234, 0.03);
+          border-radius: 4px;
+          color: rgba(255, 255, 255, 0.6);
+          font-size: 12px;
+          font-style: italic;
+        }
+      }
+    }
+
+    .show-more-btn {
+      margin-top: 8px;
+      padding: 6px 12px;
+      background: rgba(102, 126, 234, 0.1);
+      border: 1px solid rgba(102, 126, 234, 0.2);
+      border-radius: 6px;
+      color: #667eea;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+      text-align: center;
+
+      &:hover {
+        background: rgba(102, 126, 234, 0.15);
+        border-color: rgba(102, 126, 234, 0.3);
       }
     }
   }
@@ -636,6 +951,82 @@ defineExpose({
       color: rgba(255, 255, 255, 0.4);
       font-size: 11px;
       font-style: italic;
+    }
+  }
+
+  .context-section {
+    margin-bottom: 12px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border-left: 3px solid rgba(102, 126, 234, 0.4);
+
+    .context-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+
+      .context-label {
+        color: rgba(102, 126, 234, 0.8);
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .translate-context-btn {
+        padding: 4px 10px;
+        background: rgba(102, 126, 234, 0.15);
+        color: #667eea;
+        border: 1px solid rgba(102, 126, 234, 0.3);
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover:not(:disabled) {
+          background: rgba(102, 126, 234, 0.25);
+          border-color: rgba(102, 126, 234, 0.5);
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+      }
+    }
+
+    .context-text {
+      color: rgba(255, 255, 255, 0.85);
+      font-size: 14px;
+      font-style: italic;
+      line-height: 1.6;
+    }
+
+    .context-translation {
+      margin-top: 12px;
+      padding: 10px;
+      background: rgba(102, 126, 234, 0.08);
+      border-radius: 6px;
+      border: 1px solid rgba(102, 126, 234, 0.15);
+
+      .translation-label {
+        color: rgba(102, 126, 234, 0.9);
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+      }
+
+      .translated-text {
+        color: rgba(255, 255, 255, 0.95);
+        font-size: 13px;
+        line-height: 1.5;
+        font-style: italic;
+      }
     }
   }
 
