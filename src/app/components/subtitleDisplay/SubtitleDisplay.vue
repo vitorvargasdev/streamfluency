@@ -10,6 +10,7 @@ const settingStore = useSettingStore()
 <template>
   <div class="subtitle subtitle-display">
     <div
+      v-if="settingStore.isLearningSubtitleVisible"
       class="subtitle__primary subtitle__text subtitle-line"
       v-html="subtitleStore.getCurrentLearningSubtitle"
     />

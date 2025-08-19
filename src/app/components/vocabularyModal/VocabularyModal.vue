@@ -1,16 +1,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useVocabularyStore } from '../../stores/vocabulary'
-import { useSettingStore } from '../../stores/setting'
 import { usePlayerStore } from '../../stores/player'
 import type { VocabularyItem } from '../../stores/vocabulary/types'
 import GenericModal from '../genericModal/GenericModal.vue'
-import { translationService } from '../../services/translation/translation.service'
+import SelectionPopup from '../selectionPopup/SelectionPopup.vue'
 import { isSameVideo, formatVideoTime } from '../../utils/platformMatcher'
-import type {
-  DictionaryResult,
-  TranslationResult,
-} from '../../services/translation/types'
 
 const props = defineProps<{
   isVisible: boolean
@@ -22,7 +17,6 @@ const emit = defineEmits<{
 }>()
 
 const vocabularyStore = useVocabularyStore()
-const settingStore = useSettingStore()
 const playerStore = usePlayerStore()
 
 const searchQuery = ref('')
@@ -31,18 +25,8 @@ const editingTranslation = ref('')
 const editingNotes = ref('')
 const editingContext = ref('')
 
-// Details popup state
-const detailsPopupVisible = ref(false)
-const selectedWord = ref<VocabularyItem | null>(null)
-const detailsPopupRef = ref<HTMLDivElement>()
-const isTranslating = ref(false)
-const isLoadingDefinition = ref(false)
-const isTranslatingContext = ref(false)
-const translationData = ref<TranslationResult | null>(null)
-const dictionaryData = ref<DictionaryResult | null>(null)
-const contextTranslationData = ref<TranslationResult | null>(null)
-const targetLanguage = ref('Português')
-const detailsPopupPosition = ref({ x: 0, y: 0 })
+// Selection popup reference
+const selectionPopupRef = ref<InstanceType<typeof SelectionPopup>>()
 
 const filteredItems = computed(() => {
   if (!searchQuery.value) {
@@ -50,11 +34,6 @@ const filteredItems = computed(() => {
   }
   return vocabularyStore.searchItems(searchQuery.value)
 })
-
-const detailsPopupStyle = computed(() => ({
-  left: `${detailsPopupPosition.value.x}px`,
-  top: `${detailsPopupPosition.value.y}px`,
-}))
 
 const formatDate = (timestamp: number) => {
   const date = new Date(timestamp)
@@ -80,11 +59,6 @@ const getVideoButtonText = (item: VocabularyItem) => {
     return `Ir para ${formatVideoTime(item.videoTimestamp)}`
   }
   return 'Ver vídeo'
-}
-
-const truncateTitle = (title: string, maxLength = 30) => {
-  if (title.length <= maxLength) return title
-  return title.substring(0, maxLength) + '...'
 }
 
 const startEdit = (item: VocabularyItem) => {
@@ -145,98 +119,8 @@ const handleVideoClick = (item: VocabularyItem, event: Event) => {
   // If different video, let the default link behavior work
 }
 
-const showWordDetails = async (item: VocabularyItem) => {
-  selectedWord.value = item
-  detailsPopupVisible.value = true
-
-  // Position popup in center of screen
-  const popupWidth = 400
-  const viewportWidth = window.innerWidth
-  const topOffset = 100
-
-  detailsPopupPosition.value = {
-    x: (viewportWidth - popupWidth) / 2,
-    y: topOffset,
-  }
-
-  // Reset states
-  translationData.value = null
-  dictionaryData.value = null
-  contextTranslationData.value = null
-
-  // Update target language
-  const langNames: Record<string, string> = {
-    pt: 'Português',
-    es: 'Español',
-    fr: 'Français',
-    de: 'Deutsch',
-    it: 'Italiano',
-    ja: '日本語',
-    ko: '한국어',
-    zh: '中文',
-    ru: 'Русский',
-    ar: 'العربية',
-  }
-  targetLanguage.value =
-    langNames[settingStore.providers.targetLanguage] || 'Português'
-
-  // Initialize translation service
-  translationService.initWithSettings(
-    settingStore.providers.translation,
-    settingStore.providers.dictionary
-  )
-
-  // Fetch translation
-  isTranslating.value = true
-  try {
-    const result = await translationService.translate(
-      item.text,
-      'en',
-      settingStore.providers.targetLanguage
-    )
-    translationData.value = result
-  } catch (error) {
-    console.error('Error fetching translation:', error)
-  } finally {
-    isTranslating.value = false
-  }
-
-  // Fetch dictionary definition
-  isLoadingDefinition.value = true
-  try {
-    const result = await translationService.getDefinition(item.text)
-    dictionaryData.value = result
-  } catch (error) {
-    console.error('Error fetching definition:', error)
-  } finally {
-    isLoadingDefinition.value = false
-  }
-}
-
-const translateContext = async () => {
-  if (!selectedWord.value?.context || isTranslatingContext.value) return
-
-  isTranslatingContext.value = true
-  try {
-    const result = await translationService.translate(
-      selectedWord.value.context,
-      'en',
-      settingStore.providers.targetLanguage
-    )
-    contextTranslationData.value = result
-  } catch (error) {
-    console.error('Error translating context:', error)
-  } finally {
-    isTranslatingContext.value = false
-  }
-}
-
-const closeDetailsPopup = () => {
-  detailsPopupVisible.value = false
-  selectedWord.value = null
-  translationData.value = null
-  dictionaryData.value = null
-  contextTranslationData.value = null
+const showWordDetails = (item: VocabularyItem) => {
+  selectionPopupRef.value?.showVocabularyItem(item)
 }
 </script>
 
@@ -395,97 +279,8 @@ const closeDetailsPopup = () => {
     </template>
   </GenericModal>
 
-  <!-- Word Details Popup -->
-  <Teleport to="body">
-    <div
-      v-if="detailsPopupVisible"
-      ref="detailsPopupRef"
-      class="word-details-popup"
-      :style="detailsPopupStyle"
-    >
-      <div class="popup-header">
-        <div class="selected-text">{{ selectedWord?.text }}</div>
-        <button class="close-btn" @click="closeDetailsPopup" title="Fechar">
-          ×
-        </button>
-      </div>
-      <div class="popup-content">
-        <div v-if="selectedWord?.context" class="context-section">
-          <div class="context-header">
-            <div class="context-label">Contexto</div>
-            <button
-              v-if="!contextTranslationData"
-              @click="translateContext"
-              class="translate-context-btn"
-              :disabled="isTranslatingContext"
-              title="Traduzir frase de contexto"
-            >
-              {{ isTranslatingContext ? 'Traduzindo...' : 'Traduzir Frase' }}
-            </button>
-          </div>
-          <div class="context-text">"{{ selectedWord.context }}"</div>
-          <div v-if="contextTranslationData" class="context-translation">
-            <div class="translation-label">Tradução do contexto</div>
-            <div class="translated-text">
-              {{ contextTranslationData.translatedText }}
-            </div>
-          </div>
-        </div>
-
-        <div v-if="translationData" class="translation-section">
-          <div class="translation-label">Tradução ({{ targetLanguage }})</div>
-          <div class="translation-text">
-            {{ translationData.translatedText }}
-          </div>
-          <div class="translation-service">
-            via {{ translationData?.service }}
-          </div>
-        </div>
-
-        <div v-else-if="isTranslating" class="loading">
-          <span class="loading-spinner"></span>
-          Traduzindo...
-        </div>
-
-        <div v-if="isLoadingDefinition" class="loading">
-          <span class="loading-spinner"></span>
-          Buscando definição...
-        </div>
-
-        <div
-          v-else-if="dictionaryData && dictionaryData.meanings.length > 0"
-          class="dictionary-content"
-        >
-          <div v-if="dictionaryData.phonetic" class="phonetic">
-            {{ dictionaryData.phonetic }}
-          </div>
-
-          <div class="definitions">
-            <div
-              v-for="(meaning, index) in dictionaryData.meanings.slice(0, 2)"
-              :key="index"
-              class="definition-item"
-            >
-              <span v-if="meaning.partOfSpeech" class="part-of-speech">{{
-                meaning.partOfSpeech
-              }}</span>
-              <span class="definition">{{ meaning.definition }}</span>
-              <span v-if="meaning.example" class="example"
-                >"{{ meaning.example }}"</span
-              >
-            </div>
-          </div>
-        </div>
-
-        <div
-          v-else-if="!isLoadingDefinition && !dictionaryData"
-          class="no-definition"
-        >
-          Nenhuma definição encontrada
-        </div>
-      </div>
-    </div>
-  </Teleport>
+  <!-- Selection Popup for vocabulary details -->
+  <SelectionPopup ref="selectionPopupRef" mode="vocabulary" />
 </template>
 
 <style scoped lang="scss">
@@ -844,296 +639,8 @@ const closeDetailsPopup = () => {
       }
     }
   }
-
   .vocabulary-footer {
     padding: 10px;
-  }
-}
-
-.word-details-popup {
-  position: fixed;
-  z-index: 10001;
-  background: #1a1a1a;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(20px);
-  width: 400px;
-  max-width: 90vw;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-
-  .popup-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 14px 16px;
-    background: linear-gradient(
-      135deg,
-      rgba(102, 126, 234, 0.15),
-      rgba(102, 126, 234, 0.05)
-    );
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px 12px 0 0;
-
-    .selected-text {
-      color: #667eea;
-      font-size: 16px;
-      font-weight: 600;
-      word-break: break-word;
-      flex: 1;
-      margin-right: 10px;
-    }
-
-    .close-btn {
-      background: none;
-      border: none;
-      color: rgba(255, 255, 255, 0.5);
-      font-size: 24px;
-      cursor: pointer;
-      width: 30px;
-      height: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 6px;
-      transition: all 0.2s;
-      flex-shrink: 0;
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.8);
-      }
-    }
-  }
-
-  .popup-content {
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    overflow-y: auto;
-    flex: 1;
-
-    &::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 3px;
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.3);
-      }
-    }
-  }
-
-  .loading {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 0;
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 13px;
-
-    .loading-spinner {
-      display: inline-block;
-      width: 14px;
-      height: 14px;
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      border-top-color: #667eea;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-  }
-
-  .translation-section {
-    margin-bottom: 12px;
-    padding: 12px;
-    background: rgba(102, 126, 234, 0.08);
-    border-radius: 8px;
-    border: 1px solid rgba(102, 126, 234, 0.15);
-
-    .translation-label {
-      color: #667eea;
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
-    }
-
-    .translation-text {
-      color: rgba(255, 255, 255, 0.95);
-      font-size: 14px;
-      line-height: 1.6;
-      margin-bottom: 6px;
-    }
-
-    .translation-service {
-      color: rgba(255, 255, 255, 0.4);
-      font-size: 11px;
-      font-style: italic;
-    }
-  }
-
-  .dictionary-content {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-
-    .phonetic {
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 14px;
-      font-style: italic;
-      padding: 8px 12px;
-      background: rgba(102, 126, 234, 0.1);
-      border-radius: 8px;
-      display: inline-block;
-      align-self: flex-start;
-      border: 1px solid rgba(102, 126, 234, 0.2);
-    }
-
-    .definitions {
-      .definition-item {
-        margin-bottom: 12px;
-        padding: 12px;
-        background: rgba(255, 255, 255, 0.04);
-        border-radius: 8px;
-        transition: all 0.2s;
-
-        &:hover {
-          background: rgba(255, 255, 255, 0.06);
-          transform: translateX(2px);
-        }
-
-        .part-of-speech {
-          display: inline-block;
-          color: #667eea;
-          font-size: 12px;
-          font-weight: 600;
-          text-transform: uppercase;
-          margin-right: 10px;
-          letter-spacing: 0.5px;
-          padding: 2px 6px;
-          background: rgba(102, 126, 234, 0.15);
-          border-radius: 4px;
-        }
-
-        .definition {
-          color: rgba(255, 255, 255, 0.95);
-          font-size: 14px;
-          line-height: 1.6;
-          display: block;
-          margin-top: 6px;
-        }
-
-        .example {
-          display: block;
-          color: rgba(255, 255, 255, 0.65);
-          font-size: 13px;
-          font-style: italic;
-          margin-top: 8px;
-          padding: 8px 12px;
-          background: rgba(0, 0, 0, 0.2);
-          border-radius: 6px;
-        }
-      }
-    }
-  }
-
-  .no-definition {
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 13px;
-    text-align: center;
-    padding: 10px 0;
-  }
-
-  .context-section {
-    margin-bottom: 12px;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    border-left: 3px solid rgba(102, 126, 234, 0.4);
-
-    .context-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-
-      .context-label {
-        color: rgba(102, 126, 234, 0.8);
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      .translate-context-btn {
-        padding: 4px 10px;
-        background: rgba(102, 126, 234, 0.15);
-        color: #667eea;
-        border: 1px solid rgba(102, 126, 234, 0.3);
-        border-radius: 4px;
-        font-size: 11px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s;
-
-        &:hover:not(:disabled) {
-          background: rgba(102, 126, 234, 0.25);
-          border-color: rgba(102, 126, 234, 0.5);
-        }
-
-        &:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-      }
-    }
-
-    .context-text {
-      color: rgba(255, 255, 255, 0.85);
-      font-size: 14px;
-      font-style: italic;
-      line-height: 1.6;
-    }
-
-    .context-translation {
-      margin-top: 12px;
-      padding: 10px;
-      background: rgba(102, 126, 234, 0.08);
-      border-radius: 6px;
-      border: 1px solid rgba(102, 126, 234, 0.15);
-
-      .translation-label {
-        color: rgba(102, 126, 234, 0.9);
-        font-size: 10px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 6px;
-      }
-
-      .translated-text {
-        color: rgba(255, 255, 255, 0.95);
-        font-size: 13px;
-        line-height: 1.5;
-      }
-    }
-  }
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
   }
 }
 </style>
