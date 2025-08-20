@@ -1,21 +1,80 @@
-MIT License
+"Commons Clause" License Condition v1.0
 
 Copyright (c) 2025 Vitor Vargas
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+The Software is provided to you by the Licensor under the Apache License, 
+Version 2.0, as defined below, subject to the following condition.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Without limiting other conditions in the License, the grant of rights under 
+the License will not include, and the License does not grant to you, the 
+right to Sell the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+For purposes of the foregoing, "Sell" means practicing any or all of the 
+rights granted to you under the License to provide to third parties, for a 
+fee or other consideration (including without limitation fees for hosting or 
+consulting/support services related to the Software), a product or service 
+whose value derives, entirely or substantially, from the functionality of 
+the Software. Any license notice or attribution required by the License must 
+also include this Commons Clause License Condition notice.
+
+Software: StreamFluency - Language Learning Browser Extension
+License: Apache License 2.0
+Licensor: Vitor Vargas
+
+================================================================================
+
+Apache License
+Version 2.0, January 2004
+http://www.apache.org/licenses/
+
+Copyright (c) 2025 Vitor Vargas
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+================================================================================
+
+IMPORTANT NOTICE
+================
+
+This software is open source and free to use, modify, and distribute for 
+non-commercial purposes. You may:
+
+✅ Use the software for personal projects
+✅ Use the software for educational purposes  
+✅ Use the software internally within your organization
+✅ Fork and modify the code for non-commercial use
+✅ Contribute improvements back to the project
+
+You may NOT:
+
+❌ Sell the software or any derivative works
+❌ Offer the software as a commercial service (SaaS)
+❌ Use the software as a core component of a commercial product
+❌ Charge for hosting, consulting, or support services related to this software
+
+ATTRIBUTION REQUIREMENTS
+========================
+
+When distributing or publicly using this software or derivative works, you must:
+
+1. Include this complete LICENSE file
+2. Clearly indicate if changes were made to the original software
+3. Provide attribution: "Based on StreamFluency by Vitor Vargas"
+4. Include a link to the original repository: https://github.com/vitorvargas/streamfluency
+
+COMMERCIAL USE EXCEPTION
+========================
+
+The original copyright holder (Vitor Vargas) retains the exclusive right to use 
+this software for commercial purposes. For commercial licensing inquiries, please 
+contact the copyright holder.

@@ -1,5 +1,51 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { onMounted } from 'vue'
+import AppPanel from '@/app/components/appPanel/AppPanel.vue'
+import { usePlayerStore } from '@/app/stores/player'
+import { useSubtitleStore } from '@/app/stores/subtitle'
+import { useSettingStore } from '@/app/stores/setting'
+
+const playerStore = usePlayerStore()
+const subtitleStore = useSubtitleStore()
+const settingStore = useSettingStore()
+
+onMounted(async () => {
+  // Load settings from localStorage first
+  settingStore.loadFromLocalStorage()
+
+  playerStore.load()
+  subtitleStore.load()
+
+  // Hide native captions if StreamFluency is enabled
+  if (settingStore.isAppEnabled) {
+    subtitleStore.hideNativeCaptions()
+  } else {
+    subtitleStore.showNativeCaptions()
+  }
+
+  // Now use the loaded languages
+  await subtitleStore.fetchSubtitles(
+    settingStore.nativeLanguage,
+    settingStore.learningLanguage
+  )
+  subtitleStore.setSubtitlesOn(true)
+  subtitleStore.subtitlesOn()
+})
+</script>
 
 <template>
-  <div>Hello World</div>
+  <div class="app">
+    <AppPanel />
+  </div>
 </template>
+
+<style lang="scss" scoped>
+.app {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: none;
+  pointer-events: none;
+}
+</style>

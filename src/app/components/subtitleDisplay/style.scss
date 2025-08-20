@@ -1,0 +1,43 @@
+.subtitle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  &__text {
+    font-size: 36px;
+    font-weight: 500;
+    color: white;
+    text-shadow:
+      -1px -1px 0 black,
+      1px -1px 0 black,
+      -1px 1px 0 black,
+      1px 1px 0 black,
+      0 0 8px rgba(0, 0, 0, 0.8);
+    line-height: 1.3;
+
+    &--blur {
+      filter: blur(6px);
+      transition: filter 0.2s ease;
+      cursor: pointer;
+
+      &:hover {
+        filter: blur(0);
+      }
+    }
+  }
+
+  &__primary {
+    text-align: center;
+    padding: 8px 16px;
+  }
+
+  &__secondary {
+    text-align: center;
+    padding: 4px 12px;
+    font-size: 24px;
+    opacity: 0.85;
+    font-weight: 400;
+  }
+}

@@ -1,0 +1,44 @@
+.side-button {
+  display: flex;
+  flex-direction: column;
+  padding: 0px 22px 0px 22px;
+  gap: 8px;
+  cursor: pointer;
+  pointer-events: auto;
+
+  &__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    background: rgba(165, 167, 171, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    cursor: pointer;
+
+    filter: invert(10%) brightness(75%) contrast(80%);
+    transition: all 0.3s ease;
+
+    &:hover {
+      filter: invert(5%) brightness(100%) contrast(100%);
+      background: rgba(165, 167, 171, 0.95);
+      transform: scale(1.05);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    &--active {
+      background: rgba(76, 175, 80, 0.9);
+      filter: invert(0%) brightness(100%) contrast(100%);
+
+      &:hover {
+        background: rgba(76, 175, 80, 1);
+        filter: invert(0%) brightness(110%) contrast(100%);
+        transform: scale(1.05);
+      }
+    }
+  }
+}
