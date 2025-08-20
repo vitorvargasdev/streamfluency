@@ -1,13 +1,14 @@
-import { Subtitle } from '@/app/services/subtitles/types'
+import { Subtitle } from '@/app/services/subtitle/types'
 import { GLOBAL_LANGUAGES } from '@/app/assets/constants'
-import { LANGUAGES } from '@/app/services/subtitles/types'
+import { LANGUAGES } from '@/app/services/subtitle/types'
 import { PLATFORM } from '@/app/assets/constants'
-import { SubtitlePlatformInterface } from '@/app/services/subtitles/platforms/subtitle-platform.interface'
+import { ISubtitleAdapter } from '@/app/services/subtitle/adapters/ISubtitleAdapter'
 import parse, {
   YoutubeSubtitle,
-} from '@/app/services/subtitles/parsers/youtube-parser'
+} from '@/app/services/subtitle/parsers/YouTubeSubtitleParser'
+import { SubtitleError, SubtitleErrorCodes } from '@/app/services/subtitle/types/errors'
 
-export class YoutubeSubtitlePlatform implements SubtitlePlatformInterface {
+export class YouTubeSubtitleAdapter implements ISubtitleAdapter {
   name = PLATFORM.YOUTUBE
   languageCode: LANGUAGES = {
     [GLOBAL_LANGUAGES.EN]: 'en',
@@ -17,31 +18,51 @@ export class YoutubeSubtitlePlatform implements SubtitlePlatformInterface {
   private captionUrl: string = ''
 
   private getYoutubePlayer(): YoutubePlayer {
-    return document.querySelector('#movie_player') as YoutubePlayer
+    const player = document.querySelector('#movie_player') as YoutubePlayer
+    if (!player) {
+      throw new SubtitleError(
+        'YouTube player element not found',
+        SubtitleErrorCodes.PLAYER_NOT_FOUND
+      )
+    }
+    return player
   }
 
   private async toggleSubtitlesOn(): Promise<void> {
-    const player = this.getYoutubePlayer()
+    try {
+      const player = this.getYoutubePlayer()
 
-    if (player.isSubtitlesOn()) {
-      player.toggleSubtitles()
+      if (player.isSubtitlesOn()) {
+        player.toggleSubtitles()
+      }
+
+      player.toggleSubtitlesOn()
+    } catch (error) {
+      console.error('Failed to toggle subtitles:', error)
+      throw error
     }
-
-    player.toggleSubtitlesOn()
   }
 
   private async fetchCaptionTracks(): Promise<CaptionTrack[]> {
-    const player = this.getYoutubePlayer()
-    const captions = player.getAudioTrack()
+    try {
+      const player = this.getYoutubePlayer()
+      const captions = player.getAudioTrack()
 
-    if (!captions) {
-      throw new Error('No captions found')
+      if (!captions || !captions.captionTracks || captions.captionTracks.length === 0) {
+        throw new SubtitleError(
+          'No captions available for this video',
+          SubtitleErrorCodes.NO_CAPTIONS
+        )
+      }
+
+      return captions.captionTracks.map((track) => ({
+        languageCode: track.languageCode,
+        vssId: track.vssId,
+      }))
+    } catch (error) {
+      console.error('Failed to fetch caption tracks:', error)
+      throw error
     }
-
-    return captions.captionTracks.map((track) => ({
-      languageCode: track.languageCode,
-      vssId: track.vssId,
-    }))
   }
 
   private async getSubtitleUrl(): Promise<string> {
@@ -81,7 +102,10 @@ export class YoutubeSubtitlePlatform implements SubtitlePlatformInterface {
         attempts++
         if (attempts > 20) {
           XMLHttpRequest.prototype.open = originalXHR
-          reject(new Error('Subtitle URL not found'))
+          reject(new SubtitleError(
+            'Failed to intercept subtitle URL after 20 attempts',
+            SubtitleErrorCodes.XHR_INTERCEPT_TIMEOUT
+          ))
           return
         }
         this.toggleSubtitlesOn()
@@ -101,7 +125,7 @@ export class YoutubeSubtitlePlatform implements SubtitlePlatformInterface {
     )
 
     if (!subtitles) {
-      console.error('No subtitles found')
+      console.warn(`No subtitles found for language: ${languageCode}`)
       return []
     }
 
@@ -111,16 +135,44 @@ export class YoutubeSubtitlePlatform implements SubtitlePlatformInterface {
     url.searchParams.set('lang', languageCode)
     try {
       const response = await fetch(url.toString())
+      
+      if (!response.ok) {
+        throw new SubtitleError(
+          `Failed to fetch subtitles: ${response.status} ${response.statusText}`,
+          SubtitleErrorCodes.FETCH_FAILED
+        )
+      }
+      
       const data = (await response.json()) as YoutubeSubtitle
       return parse(data, 'html')
     } catch (error) {
-      console.error(error)
-      return []
+      if (error instanceof SubtitleError) {
+        throw error
+      }
+      
+      console.error('Failed to fetch or parse subtitles:', error)
+      throw new SubtitleError(
+        `Failed to process subtitles: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        SubtitleErrorCodes.PARSE_FAILED
+      )
     }
   }
 
   async fetchSubtitles(lang: GLOBAL_LANGUAGES): Promise<Subtitle[]> {
-    return await this.retrieveSubtitles(lang)
+    try {
+      return await this.retrieveSubtitles(lang)
+    } catch (error) {
+      // Only throw critical errors, not language availability issues
+      if (error instanceof SubtitleError && 
+          (error.code === SubtitleErrorCodes.LANGUAGE_NOT_FOUND || 
+           error.code === SubtitleErrorCodes.NO_CAPTIONS)) {
+        console.warn(`Subtitles not available for language ${lang}:`, error.message)
+        return []
+      }
+      
+      console.error(`Failed to fetch subtitles for language ${lang}:`, error)
+      throw error
+    }
   }
 
   getCurrentSubtitle(subtitles: Subtitle[], currentTime: number): Subtitle | null {

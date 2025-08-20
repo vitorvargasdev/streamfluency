@@ -1,12 +1,17 @@
 {
-  "name": "openfluency",
+  "name": "streamfluency",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "build": "vue-tsc --noEmit && vite build && npm run build:copy-icon",
+    "build:copy-icon": "cp public/icon.svg dist/",
+    "preview": "vite preview",
+    "firefox": "npm run build && cd dist && npx web-ext run",
+    "sign": "npm run build && cd dist && npx web-ext sign --api-key=$AMO_JWT_ISSUER --api-secret=$AMO_JWT_SECRET --channel=unlisted && cd .. && npm run sign:rename",
+    "sign:rename": "cp dist/web-ext-artifacts/*.xpi streamfluency-$(grep '\"version\"' public/manifest.json | cut -d'\"' -f4)-signed.xpi 2>/dev/null || true",
+    "package": "npm run build && cd dist && zip -r ../streamfluency.zip . -x '*.DS_Store' -x '__MACOSX/*'"
   },
   "dependencies": {
     "pinia": "^3.0.2",

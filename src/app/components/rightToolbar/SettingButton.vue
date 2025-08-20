@@ -1,24 +1,21 @@
 <script setup lang="ts">
-import genericModal from '@/app/components/genericModal/GenericModal.vue'
+import ConfigurationModal from '@/app/components/configurationModal/ConfigurationModal.vue'
 import { ref } from 'vue'
 
-const showModal = ref(false)
+const configModal = ref<InstanceType<typeof ConfigurationModal>>()
 
 const onClick = () => {
-  showModal.value = true
+  configModal.value?.show()
 }
 </script>
 
 <template>
-  <genericModal v-model="showModal">
-    <template #body>
-      <div>Testing</div>
-    </template>
-  </genericModal>
+  <ConfigurationModal ref="configModal" />
   <img
     class="side-button__icon"
     @click="onClick"
     src="@/app/assets/images/settings.svg"
+    title="Configurações"
   />
 </template>
 

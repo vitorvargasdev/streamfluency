@@ -1,12 +1,23 @@
 <script setup lang="ts">
-import SettingButton from './SettingButton.vue';
-import LanguageSwitcher from './LanguageSwitcher.vue';
+import SettingButton from './SettingButton.vue'
+import NativeSubtitleToggle from './NativeSubtitleToggle.vue'
+import LearningSubtitleToggle from './LearningSubtitleToggle.vue'
+import SubtitleListButton from './SubtitleListButton.vue'
+import VocabularyButton from './VocabularyButton.vue'
+
+const emit = defineEmits(['openSubtitleList'])
+
+const openSubtitleList = () => {
+  emit('openSubtitleList')
+}
 </script>
 
 <template>
   <div class="side-button">
-    <img class="side-button__icon" src="@/app/assets/images/texts.svg" />
-    <LanguageSwitcher />
+    <SubtitleListButton @openList="openSubtitleList" />
+    <VocabularyButton />
+    <LearningSubtitleToggle />
+    <NativeSubtitleToggle />
     <SettingButton />
   </div>
 </template>

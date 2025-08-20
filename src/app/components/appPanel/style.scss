@@ -1,8 +1,4 @@
 .panel {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
   width: 100%;
   position: absolute;
   pointer-events: none;
@@ -10,20 +6,74 @@
 
   &__subtitle-display {
     pointer-events: all;
-    position: relative;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+
+    &--youtube {
+      bottom: 80px;
+    }
   }
 
   &__toolbar {
     pointer-events: all;
-    position: relative;
+    position: absolute;
     font-size: 24px;
+
+    &--left {
+      left: 20px;
+    }
+
+    &--right {
+      right: 20px;
+    }
+
+    &--youtube {
+      bottom: 120px;
+    }
   }
 
-  &__subtitle-display--youtube {
-    bottom: 120px;
+  &__power-off {
+    pointer-events: all;
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+
+    &--youtube {
+      left: 28px;
+      bottom: 126px;
+    }
   }
 
-  &__toolbar--youtube {
-    bottom: 120px;
+  &__power-off-wrapper {
+    position: relative;
+    width: 36px;
+    height: 36px;
+  }
+
+  &__power-off-button {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    opacity: 0.9;
+
+    &:hover {
+      opacity: 1;
+      transform: scale(1.08);
+    }
+  }
+
+  &__power-off-indicator {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    pointer-events: none;
+    background-color: #ef4444;
+    box-shadow: 0 0 4px rgba(239, 68, 68, 0.6);
   }
 }

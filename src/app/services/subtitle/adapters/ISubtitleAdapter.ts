@@ -1,8 +1,8 @@
 import { PLATFORM } from '@/app/assets/constants'
-import { LANGUAGES, Subtitle } from '@/app/services/subtitles/types'
+import { LANGUAGES, Subtitle } from '@/app/services/subtitle/types'
 import { GLOBAL_LANGUAGES } from '@/app/assets/constants'
 
-export interface SubtitlePlatformInterface {
+export interface ISubtitleAdapter {
   name: PLATFORM
   languageCode: LANGUAGES
 
