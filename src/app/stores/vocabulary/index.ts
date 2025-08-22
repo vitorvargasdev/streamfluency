@@ -1,8 +1,17 @@
 import { defineStore } from 'pinia'
 import type { VocabularyItem, VocabularyState } from './types'
+import { isRecord, isString, isNumber } from '../types'
 
 const STORAGE_KEY = 'streamfluency_vocabulary'
-const OLD_STORAGE_KEY = 'openfluency_vocabulary' // For migration
+const ERROR_MESSAGES = {
+  LOAD_FAILED: 'Failed to load vocabulary',
+  ADD_FAILED: 'Failed to add item',
+  UPDATE_FAILED: 'Failed to update item',
+  DELETE_FAILED: 'Failed to delete item',
+  CLEAR_FAILED: 'Failed to clear vocabulary',
+  SAVE_FAILED: 'Failed to save vocabulary to storage',
+  ITEM_NOT_FOUND: 'Vocabulary item not found',
+} as const
 
 export const useVocabularyStore = defineStore('vocabulary', {
   state: (): VocabularyState => ({
@@ -12,125 +21,207 @@ export const useVocabularyStore = defineStore('vocabulary', {
   }),
 
   getters: {
-    sortedItems: (state) => {
-      return [...state.items].sort((a, b) => b.timestamp - a.timestamp)
-    },
+    sortedItems: (state): VocabularyItem[] =>
+      [...state.items].sort((a, b) => b.timestamp - a.timestamp),
 
-    itemsByLanguage: (state) => {
-      return (language: string) =>
-        state.items.filter((item) => item.language === language)
-    },
+    searchItems:
+      (state) =>
+      (query: string): VocabularyItem[] => {
+        if (!query.trim()) return state.items
 
-    searchItems: (state) => {
-      return (query: string) => {
-        const lowerQuery = query.toLowerCase()
-        return state.items.filter(
-          (item) =>
-            item.text.toLowerCase().includes(lowerQuery) ||
-            item.translation?.toLowerCase().includes(lowerQuery) ||
-            item.notes?.toLowerCase().includes(lowerQuery)
+        const lowerQuery = query.toLowerCase().trim()
+        return state.items.filter((item) =>
+          isItemMatchingQuery(item, lowerQuery)
         )
-      }
-    },
+      },
   },
 
   actions: {
-    async init() {
+    async init(): Promise<void> {
+      this.isLoading = true
+
       try {
-        this.isLoading = true
-        let stored = localStorage.getItem(STORAGE_KEY)
-
-        // Try to migrate from old key if not found
-        if (!stored) {
-          const oldStored = localStorage.getItem(OLD_STORAGE_KEY)
-          if (oldStored) {
-            localStorage.setItem(STORAGE_KEY, oldStored)
-            localStorage.removeItem(OLD_STORAGE_KEY)
-            stored = oldStored
-          }
-        }
-
-        if (stored) {
-          this.items = JSON.parse(stored)
-        }
+        await this.loadFromStorage()
       } catch (error) {
-        this.error = 'Failed to load vocabulary'
-        console.error('Failed to load vocabulary:', error)
+        this.error = ERROR_MESSAGES.LOAD_FAILED
+        console.error(ERROR_MESSAGES.LOAD_FAILED, error)
       } finally {
         this.isLoading = false
       }
     },
 
-    async addItem(item: Omit<VocabularyItem, 'id' | 'timestamp'>) {
-      try {
-        const newItem: VocabularyItem = {
-          ...item,
-          id: crypto.randomUUID(),
-          timestamp: Date.now(),
-        }
+    async loadFromStorage(): Promise<void> {
+      const stored = this.getStoredData()
 
+      if (!stored) return
+
+      this.items = this.parseStoredData(stored)
+    },
+
+    getStoredData(): string | null {
+      try {
+        return localStorage.getItem(STORAGE_KEY)
+      } catch (error) {
+        console.error('Failed to access localStorage:', error)
+        return null
+      }
+    },
+
+    parseStoredData(stored: string): VocabularyItem[] {
+      try {
+        const parsed = JSON.parse(stored)
+        if (!Array.isArray(parsed)) {
+          console.warn('Invalid stored data format, expected array')
+          return []
+        }
+        return parsed.filter((item) => this.isValidVocabularyItem(item))
+      } catch (error) {
+        console.error('Failed to parse stored data:', error)
+        return []
+      }
+    },
+
+    isValidVocabularyItem(item: unknown): item is VocabularyItem {
+      if (!isRecord(item)) return false
+
+      return (
+        isString(item.id) && isString(item.text) && isNumber(item.timestamp)
+      )
+    },
+
+    async addItem(
+      item: Omit<VocabularyItem, 'id' | 'timestamp'>
+    ): Promise<VocabularyItem> {
+      try {
+        const newItem = this.createVocabularyItem(item)
         this.items.push(newItem)
         await this.saveToStorage()
         return newItem
       } catch (error) {
-        this.error = 'Failed to add item'
-        console.error('Failed to add vocabulary item:', error)
+        this.error = ERROR_MESSAGES.ADD_FAILED
+        console.error(ERROR_MESSAGES.ADD_FAILED, error)
         throw error
       }
     },
 
-    async updateItem(id: string, updates: Partial<VocabularyItem>) {
+    createVocabularyItem(
+      item: Omit<VocabularyItem, 'id' | 'timestamp'>
+    ): VocabularyItem {
+      return {
+        ...item,
+        id: this.generateId(),
+        timestamp: Date.now(),
+      }
+    },
+
+    generateId(): string {
+      return crypto.randomUUID()
+    },
+
+    async updateItem(
+      id: string,
+      updates: Partial<Omit<VocabularyItem, 'id'>>
+    ): Promise<void> {
       try {
-        const index = this.items.findIndex((item) => item.id === id)
-        if (index !== -1) {
-          this.items[index] = { ...this.items[index], ...updates }
-          await this.saveToStorage()
+        const index = this.findItemIndex(id)
+        if (index === -1) {
+          throw new Error(ERROR_MESSAGES.ITEM_NOT_FOUND)
         }
+
+        this.items[index] = {
+          ...this.items[index],
+          ...updates,
+          id,
+        }
+
+        await this.saveToStorage()
       } catch (error) {
-        this.error = 'Failed to update item'
-        console.error('Failed to update vocabulary item:', error)
+        this.error = ERROR_MESSAGES.UPDATE_FAILED
+        console.error(ERROR_MESSAGES.UPDATE_FAILED, error)
         throw error
       }
     },
 
-    async deleteItem(id: string) {
+    async deleteItem(id: string): Promise<void> {
       try {
-        const index = this.items.findIndex((item) => item.id === id)
-        if (index !== -1) {
-          this.items.splice(index, 1)
-          await this.saveToStorage()
-        }
+        const index = this.findItemIndex(id)
+        if (index === -1) return
+
+        this.items.splice(index, 1)
+        await this.saveToStorage()
       } catch (error) {
-        this.error = 'Failed to delete item'
-        console.error('Failed to delete vocabulary item:', error)
+        this.error = ERROR_MESSAGES.DELETE_FAILED
+        console.error(ERROR_MESSAGES.DELETE_FAILED, error)
         throw error
       }
     },
 
-    async clearAll() {
+    async clearAll(): Promise<void> {
+      if (this.items.length === 0) return
+
       try {
         this.items = []
         await this.saveToStorage()
       } catch (error) {
-        this.error = 'Failed to clear vocabulary'
-        console.error('Failed to clear vocabulary:', error)
+        this.error = ERROR_MESSAGES.CLEAR_FAILED
+        console.error(ERROR_MESSAGES.CLEAR_FAILED, error)
         throw error
       }
     },
 
-    async saveToStorage() {
+    async saveToStorage(): Promise<void> {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.items))
+        const data = JSON.stringify(this.items)
+        localStorage.setItem(STORAGE_KEY, data)
       } catch (error) {
-        console.error('Failed to save vocabulary to storage:', error)
+        const message = ERROR_MESSAGES.SAVE_FAILED
+        console.error(message, error)
+
+        if (this.isQuotaExceededError(error)) {
+          this.error = 'Storage quota exceeded. Please clear some items.'
+          throw new Error('Storage quota exceeded')
+        }
+
         throw error
       }
+    },
+
+    isQuotaExceededError(error: unknown): boolean {
+      if (!(error instanceof DOMException)) return false
+
+      return (
+        error.name === 'QuotaExceededError' ||
+        error.name === 'NS_ERROR_DOM_QUOTA_REACHED'
+      )
     },
 
     checkIfExists(text: string): boolean {
+      if (!text) return false
+
+      const normalizedText = text.toLowerCase().trim()
       return this.items.some(
-        (item) => item.text.toLowerCase() === text.toLowerCase()
+        (item) => item.text.toLowerCase().trim() === normalizedText
       )
+    },
+
+    findItemIndex(id: string): number {
+      return this.items.findIndex((item) => item.id === id)
+    },
+
+    exportItems(): string {
+      return JSON.stringify(this.items, null, 2)
     },
   },
 })
+
+function isItemMatchingQuery(item: VocabularyItem, query: string): boolean {
+  const searchableFields = [
+    item.text,
+    item.translation,
+    item.notes,
+    item.context,
+    item.videoTitle,
+  ].filter(Boolean)
+
+  return searchableFields.some((field) => field!.toLowerCase().includes(query))
+}

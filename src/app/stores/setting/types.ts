@@ -10,11 +10,16 @@ export interface State {
   showLearningSubtitle: boolean
   isFirstTimeUser: boolean
   isEnabled: boolean
-  subtitleViewMode: 'unified' | 'tabs'
+  subtitleViewMode: SUBTITLE_VIEW_MODE
   providers: {
     translation: string
     dictionary: string
     targetLanguage: string
   }
   enableArrowKeyNavigation: boolean
+}
+
+export const enum SUBTITLE_VIEW_MODE {
+  UNIFIED = 'unified',
+  TABS = 'tabs',
 }
