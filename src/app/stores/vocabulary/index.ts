@@ -94,7 +94,7 @@ export const useVocabularyStore = defineStore('vocabulary', {
     ): Promise<VocabularyItem> {
       try {
         const newItem = this.createVocabularyItem(item)
-        this.items.push(newItem)
+        this.items = [...this.items, newItem]
         await this.saveToStorage()
         return newItem
       } catch (error) {
