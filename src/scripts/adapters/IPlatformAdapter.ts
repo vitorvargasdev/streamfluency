@@ -18,6 +18,11 @@ export interface IPlatformAdapter {
   isVideoPage(): boolean
 
   /**
+   * Check if the app should be enabled on the current page
+   */
+  shouldEnableApp?(): boolean
+
+  /**
    * Wait for required elements to be available
    */
   waitForElements(): Promise<{
