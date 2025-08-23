@@ -195,12 +195,16 @@ export const useVocabularyStore = defineStore('vocabulary', {
       )
     },
 
-    checkIfExists(text: string): boolean {
+    checkIfExists(text: string, context?: string): boolean {
       if (!text) return false
 
       const normalizedText = text.toLowerCase().trim()
+      const normalizedContext = context?.toLowerCase().trim()
+
       return this.items.some(
-        (item) => item.text.toLowerCase().trim() === normalizedText
+        (item) =>
+          item.text.toLowerCase().trim() === normalizedText &&
+          item.context?.toLowerCase().trim() === normalizedContext
       )
     },
 
