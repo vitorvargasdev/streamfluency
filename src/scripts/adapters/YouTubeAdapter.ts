@@ -13,9 +13,31 @@ export class YouTubeAdapter implements IPlatformAdapter {
 
   private miniPlayerObserver: MutationObserver | null = null
   private videoObserver: MutationObserver | null = null
+  private navigationObserver: MutationObserver | null = null
 
   isVideoPage(): boolean {
     return window.location.pathname === '/watch'
+  }
+
+  shouldEnableApp(): boolean {
+    const miniPlayer = document.querySelector('ytd-miniplayer')
+    if (
+      miniPlayer &&
+      (miniPlayer.hasAttribute('active') ||
+        miniPlayer.classList.contains('active'))
+    ) {
+      return false
+    }
+
+    if (window.location.pathname.startsWith('/shorts/')) {
+      return false
+    }
+
+    if (!this.isVideoPage()) {
+      return false
+    }
+
+    return true
   }
 
   async waitForElements(): Promise<{
@@ -23,7 +45,10 @@ export class YouTubeAdapter implements IPlatformAdapter {
     player: HTMLElement
     video: HTMLVideoElement
   }> {
-    const waitForElement = (selector: string): Promise<Element> => {
+    const waitForElement = (
+      selector: string,
+      timeout = 10000
+    ): Promise<Element | null> => {
       return new Promise((resolve) => {
         const element = document.querySelector(selector)
         if (element) {
@@ -31,9 +56,12 @@ export class YouTubeAdapter implements IPlatformAdapter {
           return
         }
 
-        const observer = new MutationObserver((mutations, obs) => {
+        let timeoutId: NodeJS.Timeout | null = null
+
+        const observer = new MutationObserver((_, obs) => {
           const element = document.querySelector(selector)
           if (element) {
+            if (timeoutId) clearTimeout(timeoutId)
             obs.disconnect()
             resolve(element)
           }
@@ -43,14 +71,40 @@ export class YouTubeAdapter implements IPlatformAdapter {
           childList: true,
           subtree: true,
         })
+
+        timeoutId = setTimeout(() => {
+          observer.disconnect()
+          console.warn(`StreamFluency: Timeout waiting for ${selector}`)
+          resolve(null)
+        }, timeout)
       })
     }
 
-    const [head, player, video] = await Promise.all([
+    const playerSelectors = [
+      'ytd-player',
+      '#movie_player',
+      '.html5-video-player',
+      '#player',
+    ]
+
+    let player: Element | null = null
+    for (const selector of playerSelectors) {
+      player = await waitForElement(selector, 2000)
+      if (player) break
+    }
+
+    if (!player) {
+      player = await waitForElement(this.selectors.player, 5000)
+    }
+
+    const [head, video] = await Promise.all([
       waitForElement(this.selectors.head),
-      waitForElement(this.selectors.player),
       waitForElement(this.selectors.video),
     ])
+
+    if (!head || !player || !video) {
+      throw new Error('Failed to find required YouTube elements')
+    }
 
     return {
       head: head as HTMLElement,
@@ -59,44 +113,78 @@ export class YouTubeAdapter implements IPlatformAdapter {
     }
   }
 
-  setupObservers(onInject: () => void, onRemove: () => void): void {
-    // Observe mini player for page navigation
-    this.miniPlayerObserver = new MutationObserver(() => {
-      const miniPlayer = document.querySelector(
-        this.selectors.miniPlayer!
-      ) as HTMLElement
-      const isWatchingOnPage = miniPlayer?.hasAttribute('is-watch-page')
-
-      if (!isWatchingOnPage) {
-        onRemove()
-      } else {
-        onInject()
-      }
-    })
-
+  private setupMiniPlayerObserver(
+    onInject: () => void,
+    onRemove: () => void
+  ): void {
     const miniPlayer = document.querySelector(
       this.selectors.miniPlayer!
     ) as HTMLElement
-    if (miniPlayer) {
-      this.miniPlayerObserver.observe(miniPlayer, {
-        attributes: true,
-        attributeFilter: ['is-watch-page'],
-      })
-    }
 
-    // Observe video src changes
-    this.videoObserver = new MutationObserver(() => {
-      onRemove()
+    if (!miniPlayer || this.miniPlayerObserver) return
+
+    this.miniPlayerObserver = new MutationObserver(() => {
+      if (!this.shouldEnableApp()) {
+        onRemove()
+        return
+      }
+
+      const isWatchingOnPage = miniPlayer.hasAttribute('is-watch-page')
+      if (!isWatchingOnPage) {
+        onRemove()
+        return
+      }
+
       onInject()
     })
 
+    this.miniPlayerObserver.observe(miniPlayer, {
+      attributes: true,
+      attributeFilter: ['is-watch-page', 'active'],
+    })
+  }
+
+  private setupVideoObserver(onInject: () => void, onRemove: () => void): void {
     const video = document.querySelector(
       this.selectors.video
     ) as HTMLVideoElement
-    if (video) {
-      this.videoObserver.observe(video, {
-        attributes: true,
-        attributeFilter: ['src'],
+
+    if (!video || this.videoObserver) return
+
+    let lastSrc = video.src
+
+    this.videoObserver = new MutationObserver(() => {
+      if (video.src === lastSrc) return
+
+      lastSrc = video.src
+      console.log('StreamFluency: Video source changed')
+      onRemove()
+
+      if (!this.shouldEnableApp()) return
+
+      setTimeout(() => onInject(), 500) // Small delay to let video load
+    })
+
+    this.videoObserver.observe(video, {
+      attributes: true,
+      attributeFilter: ['src'],
+    })
+  }
+
+  setupObservers(onInject: () => void, onRemove: () => void): void {
+    this.setupMiniPlayerObserver(onInject, onRemove)
+    this.setupVideoObserver(onInject, onRemove)
+
+    if (!this.navigationObserver) {
+      this.navigationObserver = new MutationObserver(() => {
+        if (!this.miniPlayerObserver)
+          this.setupMiniPlayerObserver(onInject, onRemove)
+        if (!this.videoObserver) this.setupVideoObserver(onInject, onRemove)
+      })
+
+      this.navigationObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
       })
     }
   }
@@ -104,7 +192,9 @@ export class YouTubeAdapter implements IPlatformAdapter {
   cleanupObservers(): void {
     this.miniPlayerObserver?.disconnect()
     this.videoObserver?.disconnect()
+    this.navigationObserver?.disconnect()
     this.miniPlayerObserver = null
     this.videoObserver = null
+    this.navigationObserver = null
   }
 }
