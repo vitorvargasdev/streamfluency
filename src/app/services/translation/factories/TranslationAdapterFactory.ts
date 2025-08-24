@@ -5,7 +5,6 @@ export class TranslationAdapterFactory {
   private static adapters: Map<string, ITranslationAdapter> = new Map()
 
   static {
-    // Register available adapters
     this.registerAdapter(new MyMemoryAdapter())
   }
 

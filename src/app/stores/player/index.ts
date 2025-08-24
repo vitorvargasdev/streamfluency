@@ -3,34 +3,52 @@ import { State } from './types'
 import getPlatform from '@/app/utils/getPlatform'
 import { PlayerService } from '@/app/services/player/player.service'
 
+const SERVICE_NOT_LOADED_ERROR = 'Player service not loaded'
+
 export const usePlayerStore = defineStore('player', {
   state: (): State => ({
     playerService: null,
   }),
+
+  getters: {},
+
   actions: {
-    load() {
+    load(): void {
       const platform = getPlatform()
       this.playerService = new PlayerService(platform)
     },
-    play() {
-      if (!this.playerService) throw new Error('Player not loaded')
-      this.playerService.play()
+
+    play(): void {
+      this.validateServiceLoaded()
+      this.playerService!.play()
     },
-    pause() {
-      if (!this.playerService) throw new Error('Player not loaded')
-      this.playerService.pause()
+
+    pause(): void {
+      this.validateServiceLoaded()
+      this.playerService!.pause()
     },
+
     isPaused(): boolean {
       if (!this.playerService) return true
       return this.playerService.isPaused()
     },
+
     currentTime(): number {
       if (!this.playerService) return 0
       return this.playerService.currentTime()
     },
+
     seekTo(time: number): void {
-      if (!this.playerService) throw new Error('Player not loaded')
-      this.playerService.setTime(time)
+      this.validateServiceLoaded()
+      if (time < 0) return
+
+      this.playerService!.setTime(time)
+    },
+
+    validateServiceLoaded(): void {
+      if (!this.playerService) {
+        throw new Error(SERVICE_NOT_LOADED_ERROR)
+      }
     },
   },
 })

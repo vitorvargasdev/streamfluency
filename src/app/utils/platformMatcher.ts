@@ -4,7 +4,6 @@ export interface PlatformMatcher {
   getVideoId: (url: URL) => string | null
 }
 
-// Define platform matchers
 const PLATFORM_MATCHERS: PlatformMatcher[] = [
   {
     name: 'youtube',
@@ -12,11 +11,9 @@ const PLATFORM_MATCHERS: PlatformMatcher[] = [
       hostname.includes('youtube.com') || hostname.includes('youtu.be'),
     getVideoId: (url) => {
       const params = new URLSearchParams(url.search)
-      // Standard YouTube URL
       const videoId = params.get('v')
       if (videoId) return videoId
 
-      // Short YouTube URL (youtu.be/VIDEO_ID)
       if (url.hostname === 'youtu.be') {
         return url.pathname.slice(1)
       }
@@ -26,9 +23,6 @@ const PLATFORM_MATCHERS: PlatformMatcher[] = [
   },
 ]
 
-/**
- * Detects the platform from a URL
- */
 export function detectPlatform(url: string): PlatformMatcher | null {
   try {
     const urlObj = new URL(url)
@@ -42,9 +36,6 @@ export function detectPlatform(url: string): PlatformMatcher | null {
   }
 }
 
-/**
- * Gets a unique video identifier from a URL
- */
 export function getVideoIdentifier(url: string): string {
   try {
     const urlObj = new URL(url)
@@ -57,17 +48,12 @@ export function getVideoIdentifier(url: string): string {
       }
     }
 
-    // Fallback for unknown platforms: use origin + pathname
     return `${urlObj.origin}${urlObj.pathname}`
   } catch {
-    // If URL parsing fails, return the original URL
     return url
   }
 }
 
-/**
- * Checks if two URLs point to the same video
- */
 export function isSameVideo(
   url1: string | undefined,
   url2: string | undefined
@@ -76,9 +62,6 @@ export function isSameVideo(
   return getVideoIdentifier(url1) === getVideoIdentifier(url2)
 }
 
-/**
- * Formats seconds to MM:SS format
- */
 export function formatVideoTime(seconds: number | undefined): string {
   if (seconds === undefined) return ''
   const mins = Math.floor(seconds / 60)

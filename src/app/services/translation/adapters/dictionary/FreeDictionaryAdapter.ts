@@ -9,7 +9,7 @@ export class FreeDictionaryAdapter implements IDictionaryAdapter {
   async isAvailable(): Promise<boolean> {
     try {
       await fetch(`${this.API_URL}/en/test`, { method: 'HEAD' })
-      return true // API returns 404 for non-existent words, but is still available
+      return true
     } catch {
       return false
     }
@@ -18,7 +18,6 @@ export class FreeDictionaryAdapter implements IDictionaryAdapter {
   async getDefinition(word: string): Promise<DictionaryResult | null> {
     const trimmedWord = word.trim().toLowerCase()
 
-    // Try different formats for compound words
     const formats = trimmedWord.includes(' ')
       ? [
           trimmedWord,
@@ -31,7 +30,7 @@ export class FreeDictionaryAdapter implements IDictionaryAdapter {
     for (const format of formats) {
       const result = await this.fetchDefinition(format)
       if (result && result.meanings.length > 0) {
-        result.word = word.trim() // Keep original text
+        result.word = word.trim()
         return result
       }
     }
@@ -85,15 +84,14 @@ export class FreeDictionaryAdapter implements IDictionaryAdapter {
         word: entry.word || word,
         phonetic: entry.phonetic,
         audio: entry.phonetics?.[0]?.audio,
-        meanings: meanings, // Return all meanings, let the UI handle display
+        meanings: meanings,
       }
     } catch (error) {
-      console.error('FreeDictionary API error:', error)
       return null
     }
   }
 
   getSupportedLanguages(): string[] {
-    return ['en'] // Free Dictionary API primarily supports English
+    return ['en']
   }
 }

@@ -1,10 +1,15 @@
 import { defineStore } from 'pinia'
-import { State } from './types'
+import { State, SUBTITLE_VIEW_MODE } from './types'
 import { GLOBAL_LANGUAGES } from '@/app/assets/constants'
 import { useSubtitleStore } from '@/app/stores/subtitle'
+import {
+  StoredSettings,
+  DEFAULT_PROVIDERS as STORE_DEFAULT_PROVIDERS,
+  isRecord,
+  isString,
+} from '../types'
 
 const STORAGE_KEY = 'streamfluency_settings'
-const OLD_STORAGE_KEY = 'openfluency_settings' // For migration
 
 export const useSettingStore = defineStore('setting', {
   state: (): State => ({
@@ -17,43 +22,35 @@ export const useSettingStore = defineStore('setting', {
     showLearningSubtitle: true,
     isFirstTimeUser: true,
     isEnabled: true,
-    subtitleViewMode: 'unified',
-    providers: {
-      translation: 'mymemory',
-      dictionary: 'freedictionary',
-      targetLanguage: 'pt',
-    },
+    subtitleViewMode: SUBTITLE_VIEW_MODE.TABS,
+    providers: { ...STORE_DEFAULT_PROVIDERS },
     enableArrowKeyNavigation: false,
+    highlightVocabulary: true,
   }),
+
   getters: {
-    nativeLanguage(state) {
-      return state.languages.native
-    },
-    learningLanguage(state) {
-      return state.languages.learning
-    },
-    isNativeSubtitleBlurred(state) {
-      return state.blurNativeSubtitle
-    },
-    isNativeSubtitleVisible(state) {
-      return state.showNativeSubtitle
-    },
-    isLearningSubtitleVisible(state) {
-      return state.showLearningSubtitle
-    },
-    isAppEnabled(state) {
-      return state.isEnabled
-    },
-    getSubtitleViewMode(state) {
-      return state.subtitleViewMode
-    },
-    isArrowKeyNavigationEnabled(state) {
-      return state.enableArrowKeyNavigation
-    },
+    nativeLanguage: (state): GLOBAL_LANGUAGES => state.languages.native,
+    learningLanguage: (state): GLOBAL_LANGUAGES => state.languages.learning,
+    isNativeSubtitleBlurred: (state): boolean => state.blurNativeSubtitle,
+    isNativeSubtitleVisible: (state): boolean => state.showNativeSubtitle,
+    isLearningSubtitleVisible: (state): boolean => state.showLearningSubtitle,
+    isAppEnabled: (state): boolean => state.isEnabled,
+    getSubtitleViewMode: (state): SUBTITLE_VIEW_MODE => state.subtitleViewMode,
+    isArrowKeyNavigationEnabled: (state): boolean =>
+      state.enableArrowKeyNavigation,
+    isVocabularyHighlightEnabled: (state): boolean => state.highlightVocabulary,
   },
+
   actions: {
-    saveToLocalStorage() {
-      const data = {
+    saveToLocalStorage(): void {
+      try {
+        const data = this.getSettingsData()
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+      } catch (error) {}
+    },
+
+    getSettingsData() {
+      return {
         languages: this.languages,
         blurNativeSubtitle: this.blurNativeSubtitle,
         showNativeSubtitle: this.showNativeSubtitle,
@@ -62,133 +59,202 @@ export const useSettingStore = defineStore('setting', {
         subtitleViewMode: this.subtitleViewMode,
         providers: this.providers,
         enableArrowKeyNavigation: this.enableArrowKeyNavigation,
+        highlightVocabulary: this.highlightVocabulary,
       }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
     },
 
     loadFromLocalStorage(): boolean {
-      // Try to load from new key first
-      let stored = localStorage.getItem(STORAGE_KEY)
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY)
+        if (!stored) return false
 
-      // If not found, try to migrate from old key
-      if (!stored) {
-        const oldStored = localStorage.getItem(OLD_STORAGE_KEY)
-        if (oldStored) {
-          localStorage.setItem(STORAGE_KEY, oldStored)
-          localStorage.removeItem(OLD_STORAGE_KEY)
-          stored = oldStored
-        }
+        const data = this.parseStoredSettings(stored)
+        if (!data) return false
+
+        this.applyStoredSettings(data)
+        this.isFirstTimeUser = false
+
+        return true
+      } catch (error) {
+        return false
+      }
+    },
+
+    parseStoredSettings(stored: string): StoredSettings | null {
+      try {
+        const parsed: unknown = JSON.parse(stored)
+        if (!isRecord(parsed)) return null
+        return parsed as StoredSettings
+      } catch (error) {
+        return null
+      }
+    },
+
+    applyStoredSettings(data: StoredSettings): void {
+      if (this.isValidLanguageConfig(data.languages)) {
+        this.languages = data.languages
       }
 
-      if (stored) {
-        try {
-          const data = JSON.parse(stored)
-          this.languages = data.languages || this.languages
-          this.blurNativeSubtitle =
-            data.blurNativeSubtitle ?? this.blurNativeSubtitle
-          this.showNativeSubtitle =
-            data.showNativeSubtitle ?? this.showNativeSubtitle
-          this.showLearningSubtitle =
-            data.showLearningSubtitle ?? this.showLearningSubtitle
-          this.isEnabled = data.isEnabled ?? this.isEnabled
-          this.subtitleViewMode = data.subtitleViewMode ?? this.subtitleViewMode
-          this.enableArrowKeyNavigation =
-            data.enableArrowKeyNavigation ?? this.enableArrowKeyNavigation
-          // Ensure providers are properly loaded with defaults
-          this.providers = {
-            translation: data.providers?.translation || 'mymemory',
-            dictionary: data.providers?.dictionary || 'freedictionary',
-            targetLanguage: data.providers?.targetLanguage || 'pt',
-          }
-          this.isFirstTimeUser = false
-          return true
-        } catch (e) {
-          console.error('Failed to load settings from localStorage', e)
-        }
+      this.blurNativeSubtitle =
+        data.blurNativeSubtitle ?? this.blurNativeSubtitle
+      this.showNativeSubtitle =
+        data.showNativeSubtitle ?? this.showNativeSubtitle
+      this.showLearningSubtitle =
+        data.showLearningSubtitle ?? this.showLearningSubtitle
+      this.isEnabled = data.isEnabled ?? this.isEnabled
+      this.enableArrowKeyNavigation =
+        data.enableArrowKeyNavigation ?? this.enableArrowKeyNavigation
+      this.highlightVocabulary =
+        data.highlightVocabulary ?? this.highlightVocabulary
+
+      if (
+        data.subtitleViewMode &&
+        this.isValidViewMode(data.subtitleViewMode)
+      ) {
+        this.subtitleViewMode = data.subtitleViewMode as SUBTITLE_VIEW_MODE
       }
-      return false
+
+      this.providers = {
+        translation:
+          data.providers?.translation || STORE_DEFAULT_PROVIDERS.translation,
+        dictionary:
+          data.providers?.dictionary || STORE_DEFAULT_PROVIDERS.dictionary,
+        targetLanguage:
+          data.providers?.targetLanguage ||
+          STORE_DEFAULT_PROVIDERS.targetLanguage,
+      }
+    },
+
+    isValidLanguageConfig(languages: unknown): languages is State['languages'] {
+      if (!isRecord(languages)) return false
+
+      const validLanguages = [
+        GLOBAL_LANGUAGES.EN,
+        GLOBAL_LANGUAGES.ES,
+        GLOBAL_LANGUAGES.PTBR,
+        GLOBAL_LANGUAGES.JA,
+      ]
+
+      return (
+        isString(languages.native) &&
+        isString(languages.learning) &&
+        validLanguages.includes(languages.native as GLOBAL_LANGUAGES) &&
+        validLanguages.includes(languages.learning as GLOBAL_LANGUAGES)
+      )
+    },
+
+    isValidViewMode(mode: unknown): mode is SUBTITLE_VIEW_MODE {
+      return (
+        mode === SUBTITLE_VIEW_MODE.UNIFIED || mode === SUBTITLE_VIEW_MODE.TABS
+      )
     },
 
     hasUserSetLanguages(): boolean {
       const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        try {
-          const data = JSON.parse(stored)
-          return (
-            data.languages && data.languages.native && data.languages.learning
-          )
-        } catch (e) {
-          return false
-        }
-      }
-      return false
+      if (!stored) return false
+
+      const data = this.parseStoredSettings(stored)
+      if (!data) return false
+
+      return this.isValidLanguageConfig(data.languages)
     },
 
-    async setLanguages(native: GLOBAL_LANGUAGES, learning: GLOBAL_LANGUAGES) {
-      const hasChanged =
-        this.languages.native !== native || this.languages.learning !== learning
+    async setLanguages(
+      native: GLOBAL_LANGUAGES,
+      learning: GLOBAL_LANGUAGES
+    ): Promise<void> {
+      const hasChanged = this.hasLanguagesChanged(native, learning)
+      if (!hasChanged) return
 
       this.languages.native = native
       this.languages.learning = learning
       this.isFirstTimeUser = false
       this.saveToLocalStorage()
 
-      if (hasChanged) {
-        const subtitleStore = useSubtitleStore()
-        await subtitleStore.fetchSubtitles(native, learning)
-      }
+      await this.refreshSubtitles(native, learning)
     },
 
-    toggleNativeSubtitleBlur() {
-      this.blurNativeSubtitle = !this.blurNativeSubtitle
-      this.saveToLocalStorage()
+    hasLanguagesChanged(
+      native: GLOBAL_LANGUAGES,
+      learning: GLOBAL_LANGUAGES
+    ): boolean {
+      return (
+        this.languages.native !== native || this.languages.learning !== learning
+      )
     },
 
-    toggleNativeSubtitleVisibility() {
+    async refreshSubtitles(
+      native: GLOBAL_LANGUAGES,
+      learning: GLOBAL_LANGUAGES
+    ): Promise<void> {
+      const subtitleStore = useSubtitleStore()
+      await subtitleStore.fetchSubtitles(native, learning)
+    },
+
+    toggleNativeSubtitleVisibility(): void {
       this.showNativeSubtitle = !this.showNativeSubtitle
       this.saveToLocalStorage()
     },
 
-    toggleLearningSubtitleVisibility() {
+    toggleLearningSubtitleVisibility(): void {
       this.showLearningSubtitle = !this.showLearningSubtitle
       this.saveToLocalStorage()
     },
 
-    toggleAppEnabled() {
+    toggleAppEnabled(): void {
       this.isEnabled = !this.isEnabled
       this.saveToLocalStorage()
-
-      const subtitleStore = useSubtitleStore()
-      if (this.isEnabled) {
-        subtitleStore.hideNativeCaptions()
-      } else {
-        subtitleStore.showNativeCaptions()
-      }
+      this.updateNativeCaptions()
     },
 
-    toggleSubtitleViewMode() {
+    updateNativeCaptions(): void {
+      const subtitleStore = useSubtitleStore()
+
+      if (this.isEnabled) {
+        subtitleStore.hideNativeCaptions()
+        return
+      }
+
+      subtitleStore.showNativeCaptions()
+    },
+
+    toggleSubtitleViewMode(): void {
       this.subtitleViewMode =
-        this.subtitleViewMode === 'unified' ? 'tabs' : 'unified'
+        this.subtitleViewMode === SUBTITLE_VIEW_MODE.UNIFIED
+          ? SUBTITLE_VIEW_MODE.TABS
+          : SUBTITLE_VIEW_MODE.UNIFIED
+
       this.saveToLocalStorage()
     },
 
-    setTranslationProvider(provider: string) {
+    setTranslationProvider(provider: string): void {
+      if (!provider) return
+
       this.providers.translation = provider
       this.saveToLocalStorage()
     },
 
-    setDictionaryProvider(provider: string) {
+    setDictionaryProvider(provider: string): void {
+      if (!provider) return
+
       this.providers.dictionary = provider
       this.saveToLocalStorage()
     },
 
-    setTargetLanguage(language: string) {
+    setTargetLanguage(language: string): void {
+      if (!language) return
+
       this.providers.targetLanguage = language
       this.saveToLocalStorage()
     },
 
-    toggleArrowKeyNavigation() {
+    toggleArrowKeyNavigation(): void {
       this.enableArrowKeyNavigation = !this.enableArrowKeyNavigation
+      this.saveToLocalStorage()
+    },
+
+    toggleVocabularyHighlight(): void {
+      this.highlightVocabulary = !this.highlightVocabulary
       this.saveToLocalStorage()
     },
   },

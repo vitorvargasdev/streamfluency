@@ -5,7 +5,6 @@ export class DictionaryAdapterFactory {
   private static adapters: Map<string, IDictionaryAdapter> = new Map()
 
   static {
-    // Register available adapters
     this.registerAdapter(new FreeDictionaryAdapter())
   }
 
