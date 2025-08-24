@@ -11,12 +11,4 @@ app.use(pinia)
 
 app.mount('#op-app')
 
-// Initialize backup service after app is mounted
-BackupService.getInstance()
-  .initAutoBackup()
-  .then(() => {
-    console.log('StreamFluency initialized with backup service')
-  })
-  .catch((error) => {
-    console.error('Failed to initialize backup service', error)
-  })
+BackupService.getInstance().initAutoBackup()

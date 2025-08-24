@@ -10,20 +10,17 @@ const subtitleStore = useSubtitleStore()
 const settingStore = useSettingStore()
 
 onMounted(async () => {
-  // Load settings from localStorage first
   settingStore.loadFromLocalStorage()
 
   playerStore.load()
   subtitleStore.load()
 
-  // Hide native captions if StreamFluency is enabled
   if (settingStore.isAppEnabled) {
     subtitleStore.hideNativeCaptions()
   } else {
     subtitleStore.showNativeCaptions()
   }
 
-  // Now use the loaded languages
   await subtitleStore.fetchSubtitles(
     settingStore.nativeLanguage,
     settingStore.learningLanguage

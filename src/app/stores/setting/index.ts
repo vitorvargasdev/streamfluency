@@ -25,6 +25,7 @@ export const useSettingStore = defineStore('setting', {
     subtitleViewMode: SUBTITLE_VIEW_MODE.TABS,
     providers: { ...STORE_DEFAULT_PROVIDERS },
     enableArrowKeyNavigation: false,
+    highlightVocabulary: true,
   }),
 
   getters: {
@@ -37,6 +38,7 @@ export const useSettingStore = defineStore('setting', {
     getSubtitleViewMode: (state): SUBTITLE_VIEW_MODE => state.subtitleViewMode,
     isArrowKeyNavigationEnabled: (state): boolean =>
       state.enableArrowKeyNavigation,
+    isVocabularyHighlightEnabled: (state): boolean => state.highlightVocabulary,
   },
 
   actions: {
@@ -44,9 +46,7 @@ export const useSettingStore = defineStore('setting', {
       try {
         const data = this.getSettingsData()
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-      } catch (error) {
-        console.error('Failed to save settings to localStorage:', error)
-      }
+      } catch (error) {}
     },
 
     getSettingsData() {
@@ -59,6 +59,7 @@ export const useSettingStore = defineStore('setting', {
         subtitleViewMode: this.subtitleViewMode,
         providers: this.providers,
         enableArrowKeyNavigation: this.enableArrowKeyNavigation,
+        highlightVocabulary: this.highlightVocabulary,
       }
     },
 
@@ -75,7 +76,6 @@ export const useSettingStore = defineStore('setting', {
 
         return true
       } catch (error) {
-        console.error('Failed to load settings from localStorage:', error)
         return false
       }
     },
@@ -86,7 +86,6 @@ export const useSettingStore = defineStore('setting', {
         if (!isRecord(parsed)) return null
         return parsed as StoredSettings
       } catch (error) {
-        console.error('Failed to parse stored settings:', error)
         return null
       }
     },
@@ -105,6 +104,8 @@ export const useSettingStore = defineStore('setting', {
       this.isEnabled = data.isEnabled ?? this.isEnabled
       this.enableArrowKeyNavigation =
         data.enableArrowKeyNavigation ?? this.enableArrowKeyNavigation
+      this.highlightVocabulary =
+        data.highlightVocabulary ?? this.highlightVocabulary
 
       if (
         data.subtitleViewMode &&
@@ -249,6 +250,11 @@ export const useSettingStore = defineStore('setting', {
 
     toggleArrowKeyNavigation(): void {
       this.enableArrowKeyNavigation = !this.enableArrowKeyNavigation
+      this.saveToLocalStorage()
+    },
+
+    toggleVocabularyHighlight(): void {
+      this.highlightVocabulary = !this.highlightVocabulary
       this.saveToLocalStorage()
     },
   },

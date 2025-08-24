@@ -1,14 +1,14 @@
-export const DATE_FILTERS = {
-  ALL: 'all',
-  TODAY: 'today',
-  WEEK: 'week',
-  MONTH: 'month',
-} as const
+export enum DATE_FILTERS {
+  ALL = 'all',
+  TODAY = 'today',
+  WEEK = 'week',
+  MONTH = 'month',
+}
 
-export const SORT_OPTIONS = {
-  RECENT: 'recent',
-  ALPHABETICAL: 'alphabetical',
-} as const
+export enum SORT_OPTIONS {
+  RECENT = 'recent',
+  ALPHABETICAL = 'alphabetical',
+}
 
 export const TIME_PERIODS = {
   DAY: 24 * 60 * 60 * 1000,
