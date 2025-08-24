@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useVocabularyModal } from '../../composables/useVocabularyModal'
 import GenericModal from '../genericModal/GenericModal.vue'
 import SelectionPopup from '../selectionPopup/SelectionPopup.vue'
@@ -8,7 +8,7 @@ import VocabularyItem from './VocabularyItem.vue'
 import { MESSAGES } from './constants'
 import type { VocabularyItem as VocabularyItemType } from '../../stores/vocabulary/types'
 
-defineProps<{
+const props = defineProps<{
   isVisible: boolean
 }>()
 
@@ -28,6 +28,7 @@ const {
   filteredItems,
   hasActiveFilters,
   clearAllFilters,
+  resetVideoFilter,
   editingTranslation,
   editingNotes,
   editingContext,
@@ -47,6 +48,19 @@ const handleShowWordDetails = (item: VocabularyItemType) => {
   if (!selectionPopupRef.value) return
   selectionPopupRef.value.showVocabularyItem(item)
 }
+
+watch(
+  () => props.isVisible,
+  (isVisible, wasVisible) => {
+    if (!isVisible || wasVisible) return
+    if (videoFilter.value === 'all') return
+
+    const currentFilterValid = uniqueVideos.value.includes(videoFilter.value)
+    if (!currentFilterValid) {
+      resetVideoFilter()
+    }
+  }
+)
 </script>
 
 <template>

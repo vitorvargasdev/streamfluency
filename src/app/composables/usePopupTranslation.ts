@@ -49,8 +49,7 @@ export function usePopupTranslation(): TranslationState {
     try {
       const result = await translationService.getDefinition(text)
       dictionaryData.value = result
-    } catch (error) {
-      console.error('Error fetching definition:', error)
+    } catch {
     } finally {
       isLoading.value = false
     }
@@ -67,8 +66,7 @@ export function usePopupTranslation(): TranslationState {
         settingStore.providers.targetLanguage
       )
       translationData.value = result
-    } catch (error) {
-      console.error('Error fetching translation:', error)
+    } catch {
     } finally {
       isTranslating.value = false
     }
@@ -85,8 +83,7 @@ export function usePopupTranslation(): TranslationState {
         settingStore.providers.targetLanguage
       )
       contextTranslationData.value = result
-    } catch (error) {
-      console.error('Error translating context:', error)
+    } catch {
     } finally {
       isTranslatingContext.value = false
     }
@@ -120,8 +117,7 @@ export function usePopupTranslation(): TranslationState {
         definition: definitionResult?.translatedText,
         example: exampleResult?.translatedText,
       })
-    } catch (error) {
-      console.error('Error translating meaning:', error)
+    } catch {
     } finally {
       loadingTranslations.value.delete(index)
     }

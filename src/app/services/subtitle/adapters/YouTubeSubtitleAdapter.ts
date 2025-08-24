@@ -6,7 +6,10 @@ import { ISubtitleAdapter } from '@/app/services/subtitle/adapters/ISubtitleAdap
 import parse, {
   YoutubeSubtitle,
 } from '@/app/services/subtitle/parsers/YouTubeSubtitleParser'
-import { SubtitleError, SubtitleErrorCodes } from '@/app/services/subtitle/types/errors'
+import {
+  SubtitleError,
+  SubtitleErrorCodes,
+} from '@/app/services/subtitle/types/errors'
 
 export class YouTubeSubtitleAdapter implements ISubtitleAdapter {
   name = PLATFORM.YOUTUBE
@@ -38,7 +41,6 @@ export class YouTubeSubtitleAdapter implements ISubtitleAdapter {
 
       player.toggleSubtitlesOn()
     } catch (error) {
-      console.error('Failed to toggle subtitles:', error)
       throw error
     }
   }
@@ -48,7 +50,11 @@ export class YouTubeSubtitleAdapter implements ISubtitleAdapter {
       const player = this.getYoutubePlayer()
       const captions = player.getAudioTrack()
 
-      if (!captions || !captions.captionTracks || captions.captionTracks.length === 0) {
+      if (
+        !captions ||
+        !captions.captionTracks ||
+        captions.captionTracks.length === 0
+      ) {
         throw new SubtitleError(
           'No captions available for this video',
           SubtitleErrorCodes.NO_CAPTIONS
@@ -60,7 +66,6 @@ export class YouTubeSubtitleAdapter implements ISubtitleAdapter {
         vssId: track.vssId,
       }))
     } catch (error) {
-      console.error('Failed to fetch caption tracks:', error)
       throw error
     }
   }
@@ -102,10 +107,12 @@ export class YouTubeSubtitleAdapter implements ISubtitleAdapter {
         attempts++
         if (attempts > 20) {
           XMLHttpRequest.prototype.open = originalXHR
-          reject(new SubtitleError(
-            'Failed to intercept subtitle URL after 20 attempts',
-            SubtitleErrorCodes.XHR_INTERCEPT_TIMEOUT
-          ))
+          reject(
+            new SubtitleError(
+              'Failed to intercept subtitle URL after 20 attempts',
+              SubtitleErrorCodes.XHR_INTERCEPT_TIMEOUT
+            )
+          )
           return
         }
         this.toggleSubtitlesOn()
@@ -124,10 +131,7 @@ export class YouTubeSubtitleAdapter implements ISubtitleAdapter {
       (track) => track.languageCode === languageCode
     )
 
-    if (!subtitles) {
-      console.warn(`No subtitles found for language: ${languageCode}`)
-      return []
-    }
+    if (!subtitles) return []
 
     this.captionUrl = await this.getSubtitleUrl()
 
@@ -135,22 +139,19 @@ export class YouTubeSubtitleAdapter implements ISubtitleAdapter {
     url.searchParams.set('lang', languageCode)
     try {
       const response = await fetch(url.toString())
-      
+
       if (!response.ok) {
         throw new SubtitleError(
           `Failed to fetch subtitles: ${response.status} ${response.statusText}`,
           SubtitleErrorCodes.FETCH_FAILED
         )
       }
-      
+
       const data = (await response.json()) as YoutubeSubtitle
       return parse(data, 'html')
     } catch (error) {
-      if (error instanceof SubtitleError) {
-        throw error
-      }
-      
-      console.error('Failed to fetch or parse subtitles:', error)
+      if (error instanceof SubtitleError) throw error
+
       throw new SubtitleError(
         `Failed to process subtitles: ${error instanceof Error ? error.message : 'Unknown error'}`,
         SubtitleErrorCodes.PARSE_FAILED
@@ -162,22 +163,25 @@ export class YouTubeSubtitleAdapter implements ISubtitleAdapter {
     try {
       return await this.retrieveSubtitles(lang)
     } catch (error) {
-      // Only throw critical errors, not language availability issues
-      if (error instanceof SubtitleError && 
-          (error.code === SubtitleErrorCodes.LANGUAGE_NOT_FOUND || 
-           error.code === SubtitleErrorCodes.NO_CAPTIONS)) {
-        console.warn(`Subtitles not available for language ${lang}:`, error.message)
+      if (
+        error instanceof SubtitleError &&
+        (error.code === SubtitleErrorCodes.LANGUAGE_NOT_FOUND ||
+          error.code === SubtitleErrorCodes.NO_CAPTIONS)
+      ) {
         return []
       }
-      
-      console.error(`Failed to fetch subtitles for language ${lang}:`, error)
+
       throw error
     }
   }
 
-  getCurrentSubtitle(subtitles: Subtitle[], currentTime: number): Subtitle | null {
-    const activeSubtitles = subtitles
-      .filter((sub) => currentTime >= sub.begin && currentTime <= sub.end)
+  getCurrentSubtitle(
+    subtitles: Subtitle[],
+    currentTime: number
+  ): Subtitle | null {
+    const activeSubtitles = subtitles.filter(
+      (sub) => currentTime >= sub.begin && currentTime <= sub.end
+    )
 
     return activeSubtitles.at(-1) ?? null
   }

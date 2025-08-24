@@ -42,7 +42,6 @@ export class MyMemoryAdapter implements ITranslationAdapter {
 
       return null
     } catch (error) {
-      console.error('MyMemory translation error:', error)
       return null
     }
   }

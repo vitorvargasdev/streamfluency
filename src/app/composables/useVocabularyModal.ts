@@ -28,19 +28,17 @@ export function useVocabularyModal(emit: EmitFunction) {
     if (days === 1) return 'Ontem'
     if (days < 7) return `${days} dias atrás`
     if (days < 30) return `${Math.floor(days / 7)} semanas atrás`
-
     return date.toLocaleDateString('pt-BR')
   }
 
   const getVideoButtonText = (item: VocabularyItem): string => {
-    const currentUrl = window.location.href
-
     if (!item.videoUrl) return 'Ver vídeo'
 
-    if (
-      isSameVideo(item.videoUrl, currentUrl) &&
-      item.videoTimestamp !== undefined
-    ) {
+    const currentUrl = window.location.href
+    const isSame = isSameVideo(item.videoUrl, currentUrl)
+    const hasTimestamp = item.videoTimestamp !== undefined
+
+    if (isSame && hasTimestamp) {
       return `Ir para ${formatVideoTime(item.videoTimestamp)}`
     }
 
@@ -61,7 +59,6 @@ export function useVocabularyModal(emit: EmitFunction) {
     if (!item.videoUrl) return
 
     const currentUrl = window.location.href
-
     if (!isSameVideo(item.videoUrl, currentUrl)) return
 
     event.preventDefault()
@@ -71,7 +68,6 @@ export function useVocabularyModal(emit: EmitFunction) {
     }
 
     playerStore.play()
-
     emit('update:isVisible', false)
     emit('close')
   }

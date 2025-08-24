@@ -69,9 +69,7 @@ export function useTextSelection(
       selectionDebounceTimer = null
     }
 
-    if (window.__streamfluencyPopupInstance !== instanceId) {
-      return
-    }
+    if (window.__streamfluencyPopupInstance !== instanceId) return
 
     const selectionInfo = getSelectionInfo()
     if (!selectionInfo) return
@@ -99,12 +97,7 @@ export function useTextSelection(
 
   const setupSelectionListener = () => {
     if (mode !== 'vocabulary') {
-      if (window.__streamfluencyPopupInstance) {
-        console.warn(
-          'Another SelectionPopup instance detected, skipping event registration'
-        )
-        return false
-      }
+      if (window.__streamfluencyPopupInstance) return false
 
       window.__streamfluencyPopupInstance = instanceId
       document.addEventListener('selectionchange', handleSelectionChange)

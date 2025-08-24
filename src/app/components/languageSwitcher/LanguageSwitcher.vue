@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { defineEmits, defineProps } from 'vue'
-
 const emits = defineEmits(['update:modelValue'])
 
 const props = defineProps({
@@ -16,7 +14,12 @@ const close = () => {
 </script>
 
 <template>
-  <GenericModal v-if="props.modelValue" title="Language Switcher" size="medium" @close="close">
+  <GenericModal
+    v-if="props.modelValue"
+    title="Language Switcher"
+    size="medium"
+    @close="close"
+  >
     <template #body>
       <div>Body</div>
     </template>

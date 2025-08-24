@@ -17,6 +17,7 @@ export interface State {
     targetLanguage: string
   }
   enableArrowKeyNavigation: boolean
+  highlightVocabulary: boolean
 }
 
 export const enum SUBTITLE_VIEW_MODE {

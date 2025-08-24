@@ -40,11 +40,7 @@ export const usePlayerStore = defineStore('player', {
 
     seekTo(time: number): void {
       this.validateServiceLoaded()
-
-      if (time < 0) {
-        console.warn('Cannot seek to negative time')
-        return
-      }
+      if (time < 0) return
 
       this.playerService!.setTime(time)
     },

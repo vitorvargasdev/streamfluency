@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineEmits, defineProps, onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
   modelValue: {
