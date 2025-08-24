@@ -43,15 +43,6 @@ By combining entertainment with education, StreamFluency aims to make the langua
 
 Please note that StreamFluency is actively being developed and new features are added regularly based on user feedback.
 
-## ✨ Installation
-
-### Firefox
-
-1. Download the latest `.xpi` file from [Releases](https://github.com/vitorvargasdev/streamfluency/releases)
-2. Open Firefox and drag the downloaded file into the browser window
-3. Click "Add" when prompted to grant permissions
-4. The StreamFluency icon should appear in your toolbar
-
 ## 📖 Usage
 
 To use StreamFluency effectively, follow these steps:
@@ -81,10 +72,6 @@ To use StreamFluency effectively, follow these steps:
 - `←` Jump to previous subtitle
 - `→` Jump to next subtitle
 - `Space` Play/pause video
-- `R` Replay current subtitle
-- `S` Save current subtitle to list
-- `V` Open vocabulary panel
-- `ESC` Close all popups
 
 ### 💡 Pro Tips
 
@@ -92,15 +79,6 @@ To use StreamFluency effectively, follow these steps:
 - Review your vocabulary list regularly
 - Use the replay feature to practice pronunciation
 - Export your vocabulary weekly for external review
-
-## 🛠️ Tech Stack
-
-- **Frontend**: Vue 3 + TypeScript
-- **State Management**: Pinia
-- **Build Tool**: Vite
-- **Styling**: SCSS
-- **API**: Web Extensions API
-- **Translation Services**: MyMemory API, Free Dictionary API
 
 ## ➕ Contributing
 
@@ -130,18 +108,6 @@ If you find a bug or have a suggestion, please [open an issue](https://github.co
 - Expected vs actual behavior
 - Browser and extension version
 
-## 🌍 Supported Languages
-
-StreamFluency works with any language pair that has subtitles available on YouTube. Popular language combinations include:
-
-- English ↔ Spanish
-- English ↔ French
-- English ↔ German
-- English ↔ Japanese
-- English ↔ Korean
-- English ↔ Portuguese
-- And many more!
-
 ## 📊 Privacy
 
 StreamFluency respects your privacy:
@@ -154,24 +120,3 @@ StreamFluency respects your privacy:
 ## 📝 License
 
 StreamFluency is licensed under the [MIT License](LICENSE).
-
-## 🙏 Acknowledgments
-
-- Thanks to all contributors who have helped improve StreamFluency
-- Special thanks to the language learning community for feedback and suggestions
-- Built with love for language learners worldwide
-
-## 📧 Contact
-
-- **GitHub Issues**: [Report bugs or request features](https://github.com/vitorvargasdev/streamfluency/issues)
-- **Email**: [streamfluency@vitorvargas.dev](mailto:streamfluency@vitorvargas.dev)
-
----
-
-<p align="center">
-  Made with ❤️ for language learners everywhere
-  <br>
-  <a href="https://github.com/vitorvargasdev/streamfluency">GitHub</a> •
-  <a href="https://github.com/vitorvargasdev/streamfluency/releases">Releases</a> •
-  <a href="https://github.com/vitorvargasdev/streamfluency/wiki">Documentation</a>
-</p>
