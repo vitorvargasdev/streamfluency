@@ -1,24 +1,13 @@
-<script lang="ts">
-import { defineComponent, computed } from 'vue'
+<script setup lang="ts">
+import { computed } from 'vue'
 import { useSettingStore } from '@/app/stores/setting'
 
-export default defineComponent({
-  name: 'ViewModeToggle',
-  setup() {
-    const settingStore = useSettingStore()
+const settingStore = useSettingStore()
+const currentMode = computed(() => settingStore.getSubtitleViewMode)
 
-    const currentMode = computed(() => settingStore.getSubtitleViewMode)
-
-    const handleToggle = () => {
-      settingStore.toggleSubtitleViewMode()
-    }
-
-    return {
-      currentMode,
-      handleToggle,
-    }
-  },
-})
+const handleToggle = () => {
+  settingStore.toggleSubtitleViewMode()
+}
 </script>
 
 <template>

@@ -1,7 +1,3 @@
-/**
- * Backup system constants
- */
-
 export const BACKUP_CONSTANTS = {
   VERSION: '1.0.0',
   STORAGE_KEYS: {
@@ -13,7 +9,7 @@ export const BACKUP_CONSTANTS = {
     AUTO: 'streamfluency-backups-auto',
   },
   LIMITS: {
-    MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB
+    MAX_FILE_SIZE: 10 * 1024 * 1024,
     MAX_BACKUPS_DEFAULT: 7,
     MIN_BACKUPS: 1,
     MAX_BACKUPS: 30,
@@ -24,8 +20,8 @@ export const BACKUP_CONSTANTS = {
     WEEKLY: 7 * 24 * 60 * 60 * 1000,
   },
   TIMEOUTS: {
-    DOWNLOAD: 30000, // 30 seconds
-    CHECK_INTERVAL: 500, // 500ms
+    DOWNLOAD: 30000,
+    CHECK_INTERVAL: 500,
   },
   FILE_EXTENSION: '.json',
   MIME_TYPE: 'application/json',

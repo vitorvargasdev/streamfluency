@@ -44,16 +44,19 @@ export function useVocabularyFilters() {
     return items.filter((item) => {
       const age = now - item.timestamp
 
-      switch (dateFilter.value) {
-        case DATE_FILTERS.TODAY:
-          return age < TIME_PERIODS.DAY
-        case DATE_FILTERS.WEEK:
-          return age < TIME_PERIODS.WEEK
-        case DATE_FILTERS.MONTH:
-          return age < TIME_PERIODS.MONTH
-        default:
-          return true
+      if (dateFilter.value === DATE_FILTERS.TODAY) {
+        return age < TIME_PERIODS.DAY
       }
+
+      if (dateFilter.value === DATE_FILTERS.WEEK) {
+        return age < TIME_PERIODS.WEEK
+      }
+
+      if (dateFilter.value === DATE_FILTERS.MONTH) {
+        return age < TIME_PERIODS.MONTH
+      }
+
+      return true
     })
   }
 
@@ -119,6 +122,10 @@ export function useVocabularyFilters() {
     searchQuery.value = ''
   }
 
+  const resetVideoFilter = () => {
+    videoFilter.value = 'all'
+  }
+
   const getFilterState = (): FilterState => ({
     searchQuery: searchQuery.value,
     dateFilter: dateFilter.value,
@@ -135,6 +142,7 @@ export function useVocabularyFilters() {
     filteredItems,
     hasActiveFilters,
     clearAllFilters,
+    resetVideoFilter,
     getFilterState,
   }
 }
