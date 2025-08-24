@@ -120,4 +120,3 @@ StreamFluency respects your privacy:
 ## 📝 License
 
 StreamFluency is licensed under the [MIT License](LICENSE).
-
