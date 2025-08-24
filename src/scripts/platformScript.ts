@@ -16,26 +16,18 @@ export class PlatformScript {
     if (this.isInjected) return
 
     if (this.adapter.shouldEnableApp && !this.adapter.shouldEnableApp()) {
-      console.log('StreamFluency: App disabled for current page context')
       return false
     }
 
     try {
       const { head, player, video } = await this.adapter.waitForElements()
 
-      if (!video.src) {
-        console.log('StreamFluency: Video source not ready, retrying...')
-        return false
-      }
+      if (!video.src) return false
 
       inject(this.adapter.platform, head, player)
       this.isInjected = true
-      console.log(
-        `StreamFluency: Successfully injected on ${this.adapter.platform}`
-      )
       return true
     } catch (error) {
-      console.error('StreamFluency: Failed to inject app', error)
       return false
     }
   }
@@ -45,7 +37,6 @@ export class PlatformScript {
 
     remove()
     this.isInjected = false
-    console.log('StreamFluency: App removed')
   }
 
   private async tryInitialize() {
@@ -55,10 +46,6 @@ export class PlatformScript {
     const isVideoPage = this.adapter.isVideoPage()
 
     if (hasVideo || isVideoPage) {
-      console.log(
-        `StreamFluency: Attempting to initialize (attempt ${this.initAttempts}/${this.maxAttempts})`
-      )
-
       const success = await this.injectApp()
 
       if (success) {
@@ -77,7 +64,6 @@ export class PlatformScript {
     }
 
     if (this.initAttempts >= this.maxAttempts && this.retryInterval) {
-      console.log('StreamFluency: Max initialization attempts reached')
       clearInterval(this.retryInterval)
       this.retryInterval = null
 
@@ -101,8 +87,6 @@ export class PlatformScript {
   }
 
   start() {
-    console.log('StreamFluency: Starting platform script')
-
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () =>
         this.initializeWithRetry()
@@ -122,7 +106,6 @@ export class PlatformScript {
       const currentUrl = location.href
       if (currentUrl !== lastUrl) {
         lastUrl = currentUrl
-        console.log('StreamFluency: URL changed, reinitializing...')
         this.initAttempts = 0
         this.removeApp()
         this.initializeWithRetry()
@@ -134,7 +117,6 @@ export class PlatformScript {
     window.addEventListener('popstate', checkUrlChange)
 
     window.addEventListener('yt-navigate-finish', () => {
-      console.log('StreamFluency: YouTube navigation detected')
       this.initAttempts = 0
       this.removeApp()
       this.initializeWithRetry()

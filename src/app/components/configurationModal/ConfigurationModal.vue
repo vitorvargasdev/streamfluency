@@ -15,11 +15,10 @@ const emit = defineEmits<{
 const settingStore = useSettingStore()
 const backupService = BackupService.getInstance()
 const isVisible = ref(false)
-const activeTab = ref<'languages' | 'providers' | 'backup' | 'keyboard'>(
-  'languages'
-)
+const activeTab = ref<
+  'languages' | 'providers' | 'backup' | 'keyboard' | 'display'
+>('languages')
 
-// Language settings
 const selectedNative = ref(settingStore.nativeLanguage)
 const selectedLearning = ref(settingStore.learningLanguage)
 const languageErrorMessage = ref('')
@@ -39,22 +38,20 @@ const availableLanguages = computed(() => [
   GLOBAL_LANGUAGES.JA,
 ])
 
-// Provider selections
 const selectedTranslation = ref('')
 const selectedDictionary = ref('')
 const targetLanguage = ref('')
 
-// Backup refs
 const fileInput = ref<HTMLInputElement>()
 const autoBackupEnabled = ref(false)
 const autoDownload = ref(true)
 const backupFrequency = ref<'hourly' | 'daily' | 'weekly'>('daily')
 const maxBackups = ref(7)
 
-// Keyboard refs
 const arrowKeyNavigationEnabled = ref(false)
 
-// Available providers
+const vocabularyHighlightEnabled = ref(true)
+
 const translationProviders = computed(() =>
   TranslationAdapterFactory.getAvailableAdapters()
 )
@@ -62,7 +59,6 @@ const dictionaryProviders = computed(() =>
   DictionaryAdapterFactory.getAvailableAdapters()
 )
 
-// Language change handler
 const onLanguageChange = async () => {
   if (selectedNative.value === selectedLearning.value) {
     languageErrorMessage.value = 'Os idiomas devem ser diferentes'
@@ -84,7 +80,6 @@ const onLanguageChange = async () => {
   }
 }
 
-// Provider event handlers
 const onTranslationChange = () => {
   settingStore.setTranslationProvider(selectedTranslation.value)
 }
@@ -97,13 +92,11 @@ const onTargetLanguageChange = () => {
   settingStore.setTargetLanguage(targetLanguage.value)
 }
 
-// Backup functions
 const exportBackup = async () => {
   try {
-    await backupService.downloadBackup(false) // manual backup
+    await backupService.downloadBackup(false)
     alert('Backup exportado com sucesso!')
   } catch (error) {
-    console.error('Failed to export backup:', error)
     alert('Erro ao exportar backup')
   }
 }
@@ -115,18 +108,16 @@ const triggerFileInput = () => {
 const handleFileSelect = async (event: Event) => {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
+  if (!file) return
 
-  if (file) {
-    try {
-      await backupService.importBackup(file)
-      alert('Backup importado com sucesso! As configurações foram restauradas.')
-      loadSettings()
-      target.value = ''
-    } catch (error) {
-      console.error('Failed to import backup:', error)
-      alert('Erro ao importar backup. Verifique se o arquivo é válido.')
-      target.value = ''
-    }
+  try {
+    await backupService.importBackup(file)
+    alert('Backup importado com sucesso! As configurações foram restauradas.')
+    loadSettings()
+    target.value = ''
+  } catch (error) {
+    alert('Erro ao importar backup. Verifique se o arquivo é válido.')
+    target.value = ''
   }
 }
 
@@ -148,25 +139,27 @@ const onArrowKeyNavigationToggle = () => {
   settingStore.toggleArrowKeyNavigation()
 }
 
+const onVocabularyHighlightToggle = () => {
+  settingStore.toggleVocabularyHighlight()
+}
+
 const loadSettings = () => {
-  // Load language settings
   selectedNative.value = settingStore.nativeLanguage
   selectedLearning.value = settingStore.learningLanguage
 
-  // Load provider settings
   selectedTranslation.value = settingStore.providers.translation
   selectedDictionary.value = settingStore.providers.dictionary
   targetLanguage.value = settingStore.providers.targetLanguage
 
-  // Load backup settings
   const backupConfig = backupService.getAutoBackupConfig()
   autoBackupEnabled.value = backupConfig.enabled
   backupFrequency.value = backupConfig.frequency
   maxBackups.value = backupConfig.maxBackups
   autoDownload.value = backupConfig.autoDownload
 
-  // Load keyboard settings
   arrowKeyNavigationEnabled.value = settingStore.isArrowKeyNavigationEnabled
+
+  vocabularyHighlightEnabled.value = settingStore.isVocabularyHighlightEnabled
 }
 
 const show = () => {
@@ -181,7 +174,6 @@ const closeModal = () => {
 
 onMounted(() => {
   loadSettings()
-  // Auto-backup is already initialized in main.ts
 })
 
 defineExpose({
@@ -228,6 +220,13 @@ defineExpose({
           @click="activeTab = 'keyboard'"
         >
           Teclado
+        </button>
+        <button
+          class="tab"
+          :class="{ active: activeTab === 'display' }"
+          @click="activeTab = 'display'"
+        >
+          Exibição
         </button>
       </div>
 
@@ -511,6 +510,37 @@ defineExpose({
           </p>
         </div>
       </div>
+
+      <!-- Display Tab Content -->
+      <div v-if="activeTab === 'display'" class="tab-content">
+        <div class="config-section">
+          <h3 class="section-title">Opções de Exibição</h3>
+
+          <div class="display-setting">
+            <label class="toggle-label">
+              <input
+                type="checkbox"
+                v-model="vocabularyHighlightEnabled"
+                @change="onVocabularyHighlightToggle"
+              />
+              <span>Destacar palavras salvas</span>
+            </label>
+            <p class="config-note">
+              Palavras e frases salvas no vocabulário serão destacadas em
+              laranja nas legendas
+            </p>
+          </div>
+        </div>
+
+        <!-- Info Section -->
+        <div class="info-section">
+          <p class="info-text">
+            As opções de exibição permitem personalizar como as legendas e
+            palavras salvas aparecem na tela. O destaque em laranja ajuda a
+            identificar rapidamente as palavras que você está estudando.
+          </p>
+        </div>
+      </div>
     </template>
   </GenericModal>
 </template>
@@ -680,7 +710,8 @@ defineExpose({
   }
 }
 
-.keyboard-setting {
+.keyboard-setting,
+.display-setting {
   margin-bottom: 20px;
 
   .toggle-label {

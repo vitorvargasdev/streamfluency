@@ -1,7 +1,8 @@
 import type { VocabularyItem } from '../../stores/vocabulary/types'
+import { DATE_FILTERS, SORT_OPTIONS } from './constants'
 
-export type DateFilter = 'all' | 'today' | 'week' | 'month'
-export type SortOption = 'recent' | 'alphabetical'
+export type DateFilter = DATE_FILTERS
+export type SortOption = SORT_OPTIONS
 
 export interface FilterState {
   searchQuery: string

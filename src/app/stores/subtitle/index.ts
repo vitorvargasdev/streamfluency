@@ -10,8 +10,6 @@ import { SubtitleLanguageType, SUBTITLE_LANGUAGE_TYPE } from '../types'
 const SUBTITLE_UPDATE_INTERVAL = 500
 const LOOP_CHECK_INTERVAL = 100
 const SERVICE_NOT_LOADED_ERROR = 'Subtitle service not loaded'
-const PLAYER_NOT_AVAILABLE_WARNING = 'Player service not available'
-const NO_SUBTITLES_WARNING = 'No subtitles available'
 
 export const useSubtitleStore = defineStore('subtitle', {
   state: (): State => ({
@@ -68,10 +66,6 @@ export const useSubtitleStore = defineStore('subtitle', {
           SUBTITLE_LANGUAGE_TYPE.NATIVE
         ),
       ])
-
-      if (!this.hasSubtitles) {
-        console.error('No subtitles available in any language')
-      }
     },
 
     async fetchLanguageSubtitles(
@@ -82,10 +76,6 @@ export const useSubtitleStore = defineStore('subtitle', {
         this.subtitles[type] =
           await this.subtitleService!.fetchSubtitles(language)
       } catch (error) {
-        console.warn(
-          `Could not fetch ${type} language (${language}) subtitles:`,
-          error
-        )
         this.subtitles[type] = []
       }
     },
@@ -177,10 +167,7 @@ export const useSubtitleStore = defineStore('subtitle', {
 
       const targetTime = this.findNextSubtitleTime(subtitles, currentTime)
 
-      if (targetTime === null) {
-        console.log('Already at the last subtitle')
-        return
-      }
+      if (targetTime === null) return
 
       playerStore.seekTo(targetTime)
     },
@@ -248,15 +235,10 @@ export const useSubtitleStore = defineStore('subtitle', {
       const playerStore = usePlayerStore()
 
       if (!playerStore.playerService) {
-        console.warn(PLAYER_NOT_AVAILABLE_WARNING)
         return { playerStore: null, currentTime: 0, subtitles: [] }
       }
 
       const subtitles = this.activeSubtitleTrack
-
-      if (subtitles.length === 0) {
-        console.warn(NO_SUBTITLES_WARNING)
-      }
 
       return {
         playerStore,

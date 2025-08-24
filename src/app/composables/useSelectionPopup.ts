@@ -56,9 +56,8 @@ export function useSelectionPopup(options: SelectionPopupProps = {}) {
   } = usePopupTranslation()
 
   const alreadyExists = computed(() => {
-    return options.mode === 'vocabulary'
-      ? true
-      : vocabularyStore.checkIfExists(selectedText.value, contextText.value)
+    if (options.mode === 'vocabulary') return true
+    return vocabularyStore.checkIfExists(selectedText.value, contextText.value)
   })
 
   const popupStyle = computed(() => ({
@@ -89,9 +88,7 @@ export function useSelectionPopup(options: SelectionPopupProps = {}) {
 
     try {
       playerStore.pause()
-    } catch (error) {
-      console.log('Could not pause video:', error)
-    }
+    } catch {}
 
     showDebounceTimer = setTimeout(() => {
       selectedText.value = text
@@ -141,8 +138,7 @@ export function useSelectionPopup(options: SelectionPopupProps = {}) {
       })
 
       setTimeout(hide, POPUP_CONFIG.ANIMATION.HIDE_DELAY)
-    } catch (error) {
-      console.error('Failed to save vocabulary item:', error)
+    } catch {
       isSaving.value = false
     }
   }
@@ -164,13 +160,11 @@ export function useSelectionPopup(options: SelectionPopupProps = {}) {
   }
 
   const openFreeDictionary = () => {
-    if (
-      settingStore.providers.dictionary === 'freedictionary' &&
-      selectedText.value
-    ) {
-      const url = `https://www.thefreedictionary.com/${encodeURIComponent(selectedText.value)}`
-      window.open(url, '_blank')
-    }
+    if (settingStore.providers.dictionary !== 'freedictionary') return
+    if (!selectedText.value) return
+
+    const url = `https://www.thefreedictionary.com/${encodeURIComponent(selectedText.value)}`
+    window.open(url, '_blank')
   }
 
   const handleClickOutside = (
@@ -182,20 +176,17 @@ export function useSelectionPopup(options: SelectionPopupProps = {}) {
     const target = event.target as HTMLElement
     const isSubtitleClick = target.closest(CSS_SELECTORS.SUBTITLE_DISPLAY)
 
-    if (isSubtitleClick) {
-      setTimeout(() => {
-        const selection = window.getSelection()
-        if (
-          !selection ||
-          selection.isCollapsed ||
-          !selection.toString().trim()
-        ) {
-          hide()
-        }
-      }, POPUP_CONFIG.ANIMATION.CLICK_OUTSIDE_DELAY)
-    } else {
+    if (!isSubtitleClick) {
       hide()
+      return
     }
+
+    setTimeout(() => {
+      const selection = window.getSelection()
+      if (!selection || selection.isCollapsed || !selection.toString().trim()) {
+        hide()
+      }
+    }, POPUP_CONFIG.ANIMATION.CLICK_OUTSIDE_DELAY)
   }
 
   const { setupSelectionListener, cleanupSelectionListener } = useTextSelection(

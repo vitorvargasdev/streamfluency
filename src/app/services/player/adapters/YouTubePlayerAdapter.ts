@@ -12,9 +12,6 @@ export class YouTubePlayerAdapter implements IPlayerAdapter {
 
   private initializePlayer(): void {
     this.player = document.querySelector('video')
-    if (!this.player) {
-      console.warn('YouTube video element not found, will retry on method calls')
-    }
   }
 
   private getPlayer(): HTMLVideoElement {
@@ -33,14 +30,13 @@ export class YouTubePlayerAdapter implements IPlayerAdapter {
   play(): void {
     try {
       const player = this.getPlayer()
-      player.play().catch(error => {
+      player.play().catch((error) => {
         throw new PlayerError(
           `Failed to play video: ${error.message}`,
           PlayerErrorCodes.PLAYBACK_FAILED
         )
       })
     } catch (error) {
-      console.error('Play failed:', error)
       throw error
     }
   }
@@ -50,7 +46,6 @@ export class YouTubePlayerAdapter implements IPlayerAdapter {
       const player = this.getPlayer()
       player.pause()
     } catch (error) {
-      console.error('Pause failed:', error)
       throw error
     }
   }
@@ -60,7 +55,6 @@ export class YouTubePlayerAdapter implements IPlayerAdapter {
       const player = this.getPlayer()
       return player.paused
     } catch (error) {
-      console.error('isPaused failed:', error)
       return true
     }
   }
@@ -70,7 +64,6 @@ export class YouTubePlayerAdapter implements IPlayerAdapter {
       const player = this.getPlayer()
       return player.currentTime || 0
     } catch (error) {
-      console.error('currentTime failed:', error)
       return 0
     }
   }
@@ -78,17 +71,16 @@ export class YouTubePlayerAdapter implements IPlayerAdapter {
   setTime(time: number): void {
     try {
       const player = this.getPlayer()
-      
+
       if (time < 0 || time > player.duration) {
         throw new PlayerError(
           `Invalid time: ${time}. Must be between 0 and ${player.duration}`,
           PlayerErrorCodes.INVALID_TIME
         )
       }
-      
+
       player.currentTime = time
     } catch (error) {
-      console.error('setTime failed:', error)
       throw error
     }
   }
@@ -98,7 +90,6 @@ export class YouTubePlayerAdapter implements IPlayerAdapter {
       const player = this.getPlayer()
       return player.duration || 0
     } catch (error) {
-      console.error('getDuration failed:', error)
       return 0
     }
   }
@@ -108,7 +99,6 @@ export class YouTubePlayerAdapter implements IPlayerAdapter {
       const player = this.getPlayer()
       return player.playbackRate || 1
     } catch (error) {
-      console.error('getPlaybackRate failed:', error)
       return 1
     }
   }
@@ -116,17 +106,16 @@ export class YouTubePlayerAdapter implements IPlayerAdapter {
   setPlaybackRate(rate: number): void {
     try {
       const player = this.getPlayer()
-      
+
       if (rate <= 0 || rate > 16) {
         throw new PlayerError(
           `Invalid playback rate: ${rate}. Must be between 0 and 16`,
           PlayerErrorCodes.INVALID_RATE
         )
       }
-      
+
       player.playbackRate = rate
     } catch (error) {
-      console.error('setPlaybackRate failed:', error)
       throw error
     }
   }
