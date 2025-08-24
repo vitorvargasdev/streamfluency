@@ -1,19 +1,11 @@
-<script lang="ts">
-import { defineComponent } from 'vue'
+<script setup lang="ts">
+const emit = defineEmits<{
+  openList: []
+}>()
 
-export default defineComponent({
-  name: 'SubtitleListButton',
-  emits: ['openList'],
-  setup(_, { emit }) {
-    const openSubtitleList = () => {
-      emit('openList')
-    }
-
-    return {
-      openSubtitleList,
-    }
-  },
-})
+const openSubtitleList = () => {
+  emit('openList')
+}
 </script>
 
 <template>

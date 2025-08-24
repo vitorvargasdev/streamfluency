@@ -28,10 +28,8 @@ const closeSubtitleList = () => {
 }
 
 const handleKeydown = (event: KeyboardEvent) => {
-  // Check if the feature is enabled
   if (!settingStore.isArrowKeyNavigationEnabled || !isEnabled.value) return
 
-  // Prevent arrow key navigation if user is typing in an input field
   const target = event.target as HTMLElement
   if (
     target.tagName === 'INPUT' ||
@@ -40,7 +38,6 @@ const handleKeydown = (event: KeyboardEvent) => {
   )
     return
 
-  // Also check if the event is from a YouTube comment box or search box
   if (
     target.closest('[contenteditable="true"]') ||
     target.closest('input') ||
@@ -48,20 +45,17 @@ const handleKeydown = (event: KeyboardEvent) => {
   )
     return
 
-  // Check if video player is focused (YouTube specific)
   const videoElement = document.querySelector('video')
   if (!videoElement) return
 
   switch (event.key) {
     case 'ArrowLeft':
-      // Stop YouTube's default 5-second rewind
       event.preventDefault()
       event.stopPropagation()
       event.stopImmediatePropagation()
       subtitleStore.goToPreviousSubtitle()
       break
     case 'ArrowRight':
-      // Stop YouTube's default 5-second fast-forward
       event.preventDefault()
       event.stopPropagation()
       event.stopImmediatePropagation()
@@ -71,7 +65,6 @@ const handleKeydown = (event: KeyboardEvent) => {
 }
 
 onMounted(() => {
-  // Add event listener with capture phase to intercept before YouTube
   window.addEventListener('keydown', handleKeydown, true)
 })
 

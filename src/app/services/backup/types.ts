@@ -1,7 +1,3 @@
-/**
- * Backup system type definitions
- */
-
 export interface BackupData {
   version: string
   timestamp: number

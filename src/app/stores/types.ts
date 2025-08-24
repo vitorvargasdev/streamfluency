@@ -22,6 +22,7 @@ export interface StoredSettings {
     targetLanguage?: string
   }
   enableArrowKeyNavigation?: boolean
+  highlightVocabulary?: boolean
 }
 
 export const PROVIDER_TYPE = {

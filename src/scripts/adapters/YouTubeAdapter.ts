@@ -74,7 +74,6 @@ export class YouTubeAdapter implements IPlatformAdapter {
 
         timeoutId = setTimeout(() => {
           observer.disconnect()
-          console.warn(`StreamFluency: Timeout waiting for ${selector}`)
           resolve(null)
         }, timeout)
       })
@@ -157,12 +156,11 @@ export class YouTubeAdapter implements IPlatformAdapter {
       if (video.src === lastSrc) return
 
       lastSrc = video.src
-      console.log('StreamFluency: Video source changed')
       onRemove()
 
       if (!this.shouldEnableApp()) return
 
-      setTimeout(() => onInject(), 500) // Small delay to let video load
+      setTimeout(() => onInject(), 500)
     })
 
     this.videoObserver.observe(video, {
